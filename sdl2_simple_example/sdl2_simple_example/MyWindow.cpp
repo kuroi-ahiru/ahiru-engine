@@ -3,13 +3,25 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_opengl.h>
 #include "MyWindow.h"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
+#include "SDL2/SDL.h"
 using namespace std;
 
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height){
 	open(title, width, height);
+
+    ImGui::CreateContext();
+    ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
+    ImGui_ImplOpenGL3_Init("#version 130");
 }
 
 MyWindow::~MyWindow() {
+    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui::DestroyContext();
+
     close();
 }
 
@@ -40,6 +52,23 @@ void MyWindow::close() {
 }
 
 void MyWindow::swapBuffers() const {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Menu")) {
+            if (ImGui::MenuItem("Adeu")) {
+                SDL_Event quit_event;
+                quit_event.type = SDL_QUIT;
+                SDL_PushEvent(&quit_event);
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
 }
 

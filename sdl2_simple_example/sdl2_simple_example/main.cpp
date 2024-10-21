@@ -4,6 +4,7 @@
 #include <exception>
 #include <glm/glm.hpp>
 #include "MyWindow.h"
+#include "imgui_impl_sdl2.h"
 #include <GL/glu.h> //anado para la glu perspective
 using namespace std;
 
@@ -75,59 +76,71 @@ static void draw_cube() {
 
 	glBegin(GL_TRIANGLES);
 
+	// Front
+	glNormal3f(0, 0, 1);
 	// face v0-v1-v2
-	glVertex3f(1, 1, 1); glTexCoord2f(1.0f, 1.0f);
-	glVertex3f(-1, 1, 1); glTexCoord2f(0.0f, 1.0f);
-	glVertex3f(-1, -1, 1); glTexCoord2f(1.0f, 0.0f);
+	glTexCoord2f(1, 1);	glColor3f(1, 1, 1);	glVertex3f(1, 1, 1);
+	glTexCoord2f(0, 1);	glColor3f(1, 1, 0); glVertex3f(-1, 1, 1);
+	glTexCoord2f(0, 0);	glColor3f(1, 0, 0); glVertex3f(-1, -1, 1);
 	// face v2-v3-v0
-	glVertex3f(-1, -1, 1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, -1, 1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, 1, 1); glTexCoord2f(0.0f, 0.0f);
+	glTexCoord2f(0, 0);	glColor3f(1, 0, 0); glVertex3f(-1, -1, 1);
+	glTexCoord2f(1, 0);	glColor3f(1, 0, 1); glVertex3f(1, -1, 1);
+	glTexCoord2f(1, 1);	glColor3f(1, 1, 1); glVertex3f(1, 1, 1);
 
+	// right faces
+	glNormal3f(1, 0, 0);
 	// face v0-v3-v4
-	glVertex3f(1, 1, 1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, -1, 1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, -1, -1); glTexCoord2f(0.0f, 0.0f);
+	glTexCoord2f(0, 1);	glColor3f(1, 1, 1); glVertex3f(1, 1, 1);
+	glTexCoord2f(0, 0);	glColor3f(1, 0, 1); glVertex3f(1, -1, 1);
+	glTexCoord2f(1, 0);	glColor3f(0, 0, 1); glVertex3f(1, -1, -1);
 	// face v4-v5-v0
-	glVertex3f(1, -1, -1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, 1, -1); glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(1, 1, 1); glTexCoord2f(0.0f, 0.0f);
+	glTexCoord2f(1, 0);	glColor3f(0, 0, 1); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 1);	glColor3f(0, 1, 1); glVertex3f(1, 1, -1);
+	glTexCoord2f(0, 1);	glColor3f(1, 1, 1); glVertex3f(1, 1, 1);
 
+	// top faces
+	glNormal3f(0, 1, 0);
 	// face v0-v5-v6
-	glVertex3f(1, 1, 1);
-	glVertex3f(1, 1, -1);
-	glVertex3f(-1, 1, -1);
-	
-	glVertex3f(-1, 1, -1);
-	glVertex3f(-1, 1, 1);
-	glVertex3f(1, 1, 1);
+	glTexCoord2f(1, 0);	glColor3f(1, 1, 1); glVertex3f(1, 1, 1);
+	glTexCoord2f(1, 1);	glColor3f(0, 1, 1); glVertex3f(1, 1, -1);
+	glTexCoord2f(0, 1);	glColor3f(0, 1, 0); glVertex3f(-1, 1, -1);
+	// face v6-v1-v0
+	glTexCoord2f(0, 1);	glColor3f(0, 1, 0); glVertex3f(-1, 1, -1);
+	glTexCoord2f(0, 0);	glColor3f(1, 1, 0); glVertex3f(-1, 1, 1);
+	glTexCoord2f(1, 0);	glColor3f(1, 1, 1); glVertex3f(1, 1, 1);
 
+	// left faces
+	glNormal3f(-1, 0, 0);
 	// face  v1-v6-v7
-	glVertex3f(-1, 1, 1);
-	glVertex3f(-1, 1, -1);
-	glVertex3f(-1, -1, -1);
-	
-	glVertex3f(-1, -1, -1);
-	glVertex3f(-1, -1, 1);
-	glVertex3f(-1, 1, 1);
+	glTexCoord2f(1, 1);	glColor3f(1, 1, 0); glVertex3f(-1, 1, 1);
+	glTexCoord2f(0, 1);	glColor3f(0, 1, 0); glVertex3f(-1, 1, -1);
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 0); glVertex3f(-1, -1, -1);
+	// face v7-v2-v1
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 0);	glColor3f(1, 0, 0); glVertex3f(-1, -1, 1);
+	glTexCoord2f(1, 1);	glColor3f(1, 1, 0); glVertex3f(-1, 1, 1);
 
+	// bottom faces
+	glNormal3f(0, -1, 0);
 	// face v7-v4-v3
-	glVertex3f(-1, -1, -1);
-	glVertex3f(1, -1, -1);
-	glVertex3f(1, -1, 1);
-	
-	glVertex3f(1, -1, 1);
-	glVertex3f(-1, -1, 1);
-	glVertex3f(-1, -1, -1);
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 0);	glColor3f(0, 0, 1); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 1);	glColor3f(1, 0, 1); glVertex3f(1, -1, 1);
+	// face v3-v2-v7
+	glTexCoord2f(1, 1);	glColor3f(1, 0, 1); glVertex3f(1, -1, 1);
+	glTexCoord2f(0, 1);	glColor3f(1, 0, 0); glVertex3f(-1, -1, 1);
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 0); glVertex3f(-1, -1, -1);
 
+	// back faces
+	glNormal3f(0, 0, -1);
 	// face v4-v7-v6
-	glVertex3f(1, -1, -1);
-	glVertex3f(-1, -1, -1);
-	glVertex3f(-1, 1, -1);
-	
-	glVertex3f(-1, 1, -1);
-	glVertex3f(1, 1, -1);
-	glVertex3f(1, -1, -1);
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 1); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 0);	glColor3f(0, 0, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 1);	glColor3f(0, 1, 0); glVertex3f(-1, 1, -1);
+	// face v6-v5-v4
+	glTexCoord2f(1, 1);	glColor3f(0, 1, 0); glVertex3f(-1, 1, -1);
+	glTexCoord2f(0, 1);	glColor3f(0, 1, 1); glVertex3f(1, 1, -1);
+	glTexCoord2f(0, 0);	glColor3f(0, 0, 1); glVertex3f(1, -1, -1);
 
 	glEnd();
 }
@@ -145,8 +158,22 @@ static void display_func() {
 	draw_cube();
 
 	angle += 0.5f;
+}
 
-
+static bool processEvents() {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		switch (event.type)
+		{
+		case SDL_QUIT:
+			return false;
+			break;
+		default:
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			break;
+		}
+	}
+	return true;
 }
 
 int main(int argc, char** argv) {
