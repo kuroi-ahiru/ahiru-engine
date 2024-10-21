@@ -6,6 +6,7 @@
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
 #include <GL/glu.h> //anado para la glu perspective
+
 using namespace std;
 
 using hrclock = chrono::high_resolution_clock;
