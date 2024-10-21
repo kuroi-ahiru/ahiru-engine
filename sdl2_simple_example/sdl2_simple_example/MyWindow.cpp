@@ -9,8 +9,8 @@
 #include "SDL2/SDL.h"
 using namespace std;
 
-MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height){
-	open(title, width, height);
+MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
+    open(title, width, height);
 
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
@@ -32,7 +32,7 @@ void MyWindow::open(const char* title, unsigned short width, unsigned short heig
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    _window = SDL_CreateWindow( title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
+    _window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!_window) throw exception(SDL_GetError());
 
     _ctx = SDL_GL_CreateContext(_window);
@@ -48,13 +48,14 @@ void MyWindow::close() {
     _ctx = nullptr;
 
     SDL_DestroyWindow(static_cast<SDL_Window*>(_window));
-	_window = nullptr;
+    _window = nullptr;
 }
 
 void MyWindow::swapBuffers() const {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
+
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Menu")) {
             if (ImGui::MenuItem("Adeu")) {
@@ -66,6 +67,7 @@ void MyWindow::swapBuffers() const {
         }
         ImGui::EndMainMenuBar();
     }
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -73,13 +75,13 @@ void MyWindow::swapBuffers() const {
 }
 
 bool MyWindow::processEvents(IEventProcessor* event_processor) {
-	SDL_Event e;
-	while (SDL_PollEvent(&e)) {
-		if (event_processor) event_processor->processEvent(e);
-		switch (e.type) {
-		case SDL_QUIT: close(); return false;
-		}
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        ImGui_ImplSDL2_ProcessEvent(&e);
+        if (event_processor) event_processor->processEvent(e);
+        switch (e.type) {
+        case SDL_QUIT: close(); return false;
+        }
     }
     return true;
 }
-
