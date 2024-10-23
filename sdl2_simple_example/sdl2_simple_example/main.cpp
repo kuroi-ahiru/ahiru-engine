@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
-#include <GL/glu.h> // anado para la glu perspective
+#include <GL/glu.h> // para la perspectiva de glu
 
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -23,7 +23,13 @@ static const ivec2 WINDOW_SIZE(1300, 800);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
-float angle = 0.0f; // ángulo de rotación
+float camera_angle = 0.0f; // ángulo de la cámara
+float camera_radius = 10.0f; // distancia de la cámara al origen
+float camera_height = 8.0f;  // altura fija de la cámara (vista aérea)
+
+// Parámetros de la cuadrícula
+int grid_size = 20;  // Número de líneas en cada dirección (XZ)
+float grid_spacing = 1.0f;  // Espacio entre las líneas de la cuadrícula
 
 static void init_openGL() {
     glewInit();
@@ -71,22 +77,40 @@ static void loadModel(const char* file) {
     aiReleaseImport(scene);
 }
 
+// Función para dibujar la cuadrícula en el plano XZ
+static void draw_grid() {
+    glLineWidth(1.2f); // Ancho de línea más fino para la cuadrícula
+    glColor3f(0.7f, 0.7f, 0.7f); // Color gris claro para la cuadrícula
+
+    glBegin(GL_LINES);
+    for (int i = -grid_size; i <= grid_size; ++i) {
+        // Líneas paralelas al eje X (a lo largo del Z)
+        glVertex3f(i * grid_spacing, 0.0f, -grid_size * grid_spacing);
+        glVertex3f(i * grid_spacing, 0.0f, grid_size * grid_spacing);
+
+        // Líneas paralelas al eje Z (a lo largo del X)
+        glVertex3f(-grid_size * grid_spacing, 0.0f, i * grid_spacing);
+        glVertex3f(grid_size * grid_spacing, 0.0f, i * grid_spacing);
+    }
+    glEnd();
+}
+
 static void display_func() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    glLineWidth(1.2f);
 
-    glBegin(GL_LINES);
+    // Actualizamos la posición de la cámara usando coordenadas polares para rotar sobre el eje XZ con una altura fija
+    float camX = sin(camera_angle) * camera_radius;
+    float camZ = cos(camera_angle) * camera_radius;
 
-    glVertex3f(-100.f, 0.0f, 0.0f);
+    // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
+    gluLookAt(camX, camera_height, camZ,  // Posición de la cámara (X, Y, Z)
+        0.0, 0.0, 0.0,            // A dónde mira (el origen)
+        0.0, 1.0, 0.0);           // Vector "arriba" (eje Y)
 
-    glVertex3f(0.0f, 0.0f, -5.0f);
-    glEnd();
-
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -5.0f);
-    glRotatef(angle, 1.0f, 1.0f, 1.0f);
+    // Dibujar la cuadrícula del suelo
+    draw_grid();
 
     // Dibujar el modelo
     glBegin(GL_TRIANGLES);
@@ -96,7 +120,9 @@ static void display_func() {
     }
     glEnd();
 
-    angle += 0.5f;
+    // Incrementar el ángulo de la cámara para rotar
+    camera_angle += 0.005f;  // Ajusta la velocidad de rotación si es necesario
+    if (camera_angle > 2.0f * 3.14159265f) camera_angle = 0.0f;  // Resetea el ángulo después de 360 grados
 }
 
 static bool processEvents() {
@@ -119,7 +145,7 @@ int main(int argc, char** argv) {
     init_openGL();
 
     // Cargar el modelo
-    loadModel("cone.fbx");
+    loadModel("cube.fbx");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
