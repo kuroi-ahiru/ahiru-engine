@@ -19,7 +19,7 @@ using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
 using vec3 = glm::dvec3;
 
-static const ivec2 WINDOW_SIZE(512, 512);
+static const ivec2 WINDOW_SIZE(1300, 800);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -75,6 +75,16 @@ static void display_func() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
+    glLineWidth(1.2f);
+
+    glBegin(GL_LINES);
+
+    glVertex3f(-100.f, 0.0f, 0.0f);
+
+    glVertex3f(0.0f, 0.0f, -5.0f);
+    glEnd();
+
+    glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -5.0f);
     glRotatef(angle, 1.0f, 1.0f, 1.0f);
 
@@ -109,7 +119,7 @@ int main(int argc, char** argv) {
     init_openGL();
 
     // Cargar el modelo
-    loadModel("test.fbx");
+    loadModel("cone.fbx");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
