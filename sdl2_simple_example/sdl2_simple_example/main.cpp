@@ -6,6 +6,7 @@
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
 #include <GL/glu.h> // anado para la glu perspective
+#include <glm/vec2.hpp> //anado para la textura
 
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -19,14 +20,21 @@ using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
 using vec3 = glm::dvec3;
 
+using vec2 = glm::vec2;
+using vec3 = glm::dvec3;
+
 static const ivec2 WINDOW_SIZE(512, 512);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
+static std::vector<vec2> texCoords;
+static std::vector<vec3> vertices;
+static std::vector<unsigned int> indices;
+
 float angle = 0.0f; // ángulo de rotación
 
-#define CHECKERS_HEIGHT 64
-#define CHECKERS_WIDTH 64
+#define CHECKERS_HEIGHT 128
+#define CHECKERS_WIDTH 128
 
 static void init_openGL() {
     glewInit();
@@ -42,9 +50,6 @@ static void init_openGL() {
     // Volver al modo de la matriz del modelo/vista
     glMatrixMode(GL_MODELVIEW);
 }
-
-static std::vector<vec3> vertices;
-static std::vector<unsigned int> indices;
 
 static void loadModel(const char* file) {
    
@@ -62,6 +67,15 @@ static void loadModel(const char* file) {
         for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
             aiVector3D vertex = mesh->mVertices[v];
             vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+
+            // Almacenar coordenadas de textura
+            if (mesh->mTextureCoords[0]) {
+                aiVector3D uv = mesh->mTextureCoords[0][v];
+                texCoords.emplace_back(uv.x, uv.y);
+            }
+            else {
+                texCoords.emplace_back(0.0f, 0.0f); // Asigna UV por defecto si no hay
+            }
         }
 
         // Almacenar índices
@@ -82,10 +96,18 @@ static void display_func() {
     glTranslatef(0.0f, 0.0f, -5.0f);
     glRotatef(angle, 1.0f, 1.0f, 1.0f);
 
-    //Texturas
+    // Configuración de texturas
     glEnable(GL_TEXTURE_2D);
-    GLubyte checkerImage[CHECKERS_HEIGHT][CHECKERS_WIDTH][4];
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+    // Cargar la textura de cuadros (checker)
+    GLubyte checkerImage[CHECKERS_HEIGHT][CHECKERS_WIDTH][4];
     for (int i = 0; i < CHECKERS_HEIGHT; i++) {
         for (int j = 0; j < CHECKERS_WIDTH; j++) {
             int c = ((((i & 0x8) == 0) ^ (((j & 0x8)) == 0))) * 255;
@@ -95,21 +117,15 @@ static void display_func() {
             checkerImage[i][j][3] = (GLubyte)255;
         }
     }
-    GLuint textureID;
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CHECKERS_WIDTH, CHECKERS_HEIGHT, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, checkerImage);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CHECKERS_WIDTH, CHECKERS_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerImage);
 
     // Dibujar el modelo
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < indices.size(); i++) {
         const vec3& vertex = vertices[indices[i]];
+        const vec2& texCoord = texCoords[indices[i]]; // Obtener la coordenada de textura correspondiente
+
+        glTexCoord2f(texCoord.x, texCoord.y); // Establecer la coordenada de textura
         glVertex3f(vertex.x, vertex.y, vertex.z);
     }
     glEnd();
@@ -137,7 +153,7 @@ int main(int argc, char** argv) {
     init_openGL();
 
     // Cargar el modelo
-    loadModel("test.fbx");
+    loadModel("cone.fbx");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
