@@ -6,6 +6,7 @@
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
 #include <GL/glu.h> // para la perspectiva de glu
+#include <glm/gtc/matrix_transform.hpp> // Añadir esta línea para incluir glm::lookAt
 
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -29,7 +30,7 @@ const float camera_radius = 10.0f; // distancia de la cámara al origen
 float camX = sin(camera_angle) * camera_radius;
 float camZ = cos(camera_angle) * camera_radius;
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 8.0f);
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraDirection = cameraPos - cameraTarget;
 
@@ -37,7 +38,10 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 
-glm::mat4 view;
+float yaw = -90.0f; //apunta a -z
+float pitch = 0.0f;
+bool isMiddleButtonPressed = false;
+int lastMouseX, lastMouseY;
 
 // Parámetros de la cuadrícula
 int grid_size = 20;  // Número de líneas en cada dirección (XZ)
@@ -117,7 +121,9 @@ static void display_func() {
     float camZ = cos(camera_angle) * camera_radius;
 
     // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+            cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
+            cameraUp.x, cameraUp.y, cameraUp.z);
 
     // Dibujar la cuadrícula del suelo
     draw_grid();
@@ -129,11 +135,68 @@ static void display_func() {
         glVertex3f(vertex.x, vertex.y, vertex.z);
     }
     glEnd();
-
-    // Incrementar el ángulo de la cámara para rotar
-    camera_angle += 0.005f;  // Ajusta la velocidad de rotación si es necesario
-    if (camera_angle > 2.0f * 3.14159265f) camera_angle = 0.0f;  // Resetea el ángulo después de 360 grados
 }
+
+void processInput() {
+    const float cameraSpeed = 0.05f;
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+
+    // Movimiento hacia adelante y hacia atrás
+    if (state[SDL_SCANCODE_W]) {
+        cameraPos += cameraSpeed * cameraFront;
+    }
+    if (state[SDL_SCANCODE_S]) {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+
+    // Movimiento lateral (izquierda y derecha)
+    if (state[SDL_SCANCODE_A]) {
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if (state[SDL_SCANCODE_D]) {
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+}
+
+void updateCameraDirection() {
+    const float sensitivity = 0.1f;
+
+    int mouseX, mouseY;
+    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+
+    if (mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
+        if (!isMiddleButtonPressed) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            isMiddleButtonPressed = true;
+        }
+
+        //Calculamos el desplazamiento
+        int xOffset = mouseX - lastMouseX;
+        int yOffset = lastMouseY - mouseY;//Invertimos la y
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        xOffset *= sensitivity;
+        yOffset *= sensitivity;
+
+        //Ajustamos los ángulos
+        yaw += xOffset;
+        pitch += yOffset;
+
+        //Actualizamos la dirección de la cámara
+        glm::vec3 front;
+        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = sin(glm::radians(pitch));
+        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraFront = glm::normalize(front);
+    }
+    else {
+        isMiddleButtonPressed = false;
+    }
+}
+
 
 static bool processEvents() {
     SDL_Event event;
@@ -159,6 +222,9 @@ int main(int argc, char** argv) {
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
+
+        processInput();
+        updateCameraDirection();
         display_func();
         window.swapBuffers();
         const auto t1 = hrclock::now();
