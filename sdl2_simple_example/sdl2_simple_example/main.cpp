@@ -24,8 +24,20 @@ static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
 float camera_angle = 0.0f; // ángulo de la cámara
-float camera_radius = 10.0f; // distancia de la cámara al origen
-float camera_height = 8.0f;  // altura fija de la cámara (vista aérea)
+const float camera_radius = 10.0f; // distancia de la cámara al origen
+
+float camX = sin(camera_angle) * camera_radius;
+float camZ = cos(camera_angle) * camera_radius;
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraDirection = cameraPos - cameraTarget;
+
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+
+glm::mat4 view;
 
 // Parámetros de la cuadrícula
 int grid_size = 20;  // Número de líneas en cada dirección (XZ)
@@ -105,9 +117,7 @@ static void display_func() {
     float camZ = cos(camera_angle) * camera_radius;
 
     // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
-    gluLookAt(camX, camera_height, camZ,  // Posición de la cámara (X, Y, Z)
-        0.0, 0.0, 0.0,            // A dónde mira (el origen)
-        0.0, 1.0, 0.0);           // Vector "arriba" (eje Y)
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     // Dibujar la cuadrícula del suelo
     draw_grid();
