@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
-#include <GL/glu.h> 
+#include <GL/glu.h>
 #include <IL/il.h>
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -18,24 +18,26 @@ using hrclock = chrono::high_resolution_clock;
 using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
 using vec2 = glm::vec2;
-using vec3 = glm::dvec3;
+using vec3 = glm::vec3;
 
 static const ivec2 WINDOW_SIZE(1300, 800);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
 // Parámetros de la cámara
-float camera_angle = 0.0f; 
-float camera_radius = 10.0f; 
-float camera_height = 8.0f; 
+float camera_angle = 0.0f;
+float camera_radius = 10.0f;
+float camera_height = 8.0f;
 
 // Parámetros de la cuadrícula
 int grid_size = 20;
-float grid_spacing = 1.5f; 
+float grid_spacing = 1.5f;
 
 static std::vector<vec3> vertices;
 static std::vector<vec2> texCoords;
 static std::vector<unsigned int> indices;
+
+GLuint vao, vboVertices, vboTexCoords, ebo; // Buffers
 
 static void init_openGL() {
     glewInit();
@@ -55,7 +57,8 @@ static void loadModel(const char* file) {
         fprintf(stderr, "Error en cargar el archivo: %s\n", aiGetErrorString());
         return;
     }
-    printf("Numero de mallas: %u\n", scene->mNumMeshes);
+    printf("Número de mallas: %u\n", scene->mNumMeshes);
+
     for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[i];
         printf("\nMalla %u:\n", i);
@@ -65,17 +68,20 @@ static void loadModel(const char* file) {
             vertices.emplace_back(vertex.x, vertex.y, vertex.z);
         }
 
+        // Cargar coordenadas UV
         if (mesh->HasTextureCoords(0)) {
             for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
                 aiVector3D uv = mesh->mTextureCoords[0][v];
-                texCoords.emplace_back(uv.x, uv.y);
+                texCoords.emplace_back(uv.x, uv.y); // Intenta sin invertir
             }
-        } else {
+        }
+        else {
             for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
                 texCoords.emplace_back(0.0f, 0.0f);
             }
         }
 
+        // Cargar índices de las caras
         for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
             aiFace face = mesh->mFaces[f];
             for (unsigned int j = 0; j < face.mNumIndices; j++) {
@@ -83,14 +89,46 @@ static void loadModel(const char* file) {
             }
         }
     }
+
     aiReleaseImport(scene);
+    // Inicializa los buffers después de cargar el modelo
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // VBO para vértices
+    glGenBuffers(1, &vboVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // VBO para coordenadas UV
+    glGenBuffers(1, &vboTexCoords);
+    glBindBuffer(GL_ARRAY_BUFFER, vboTexCoords);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(vec2), texCoords.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+    glEnableVertexAttribArray(1);
+
+    // EBO para índices
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    glBindVertexArray(0); // Desvincula el VAO
 }
 
 GLuint LoadTexture(const char* file) {
     ILuint imageID;
     ilGenImages(1, &imageID);
     ilBindImage(imageID);
-    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+
+    if (ilLoad(IL_TYPE_UNKNOWN, (wchar_t*)file)) {
+        ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+        printf("Cargada textura correctamente \n");
+    }
+    else {
+        fprintf(stderr, "Error al cargar la textura.\n");
+    }
 
     GLuint textureID;
     glGenTextures(1, &textureID);
@@ -108,8 +146,8 @@ GLuint LoadTexture(const char* file) {
 }
 
 static void draw_grid() {
-    glLineWidth(1.2f); 
-    glColor3f(0.7f, 0.7f, 0.7f); 
+    glLineWidth(1.2f);
+    glColor3f(0.7f, 0.7f, 0.7f);
 
     glBegin(GL_LINES);
     for (int i = -grid_size; i <= grid_size; ++i) {
@@ -122,7 +160,7 @@ static void draw_grid() {
     glEnd();
 }
 
-static void display_func(GLuint textureID) { 
+static void display_func(GLuint textureID) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
@@ -133,17 +171,11 @@ static void display_func(GLuint textureID) {
     draw_grid();
 
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID); 
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glBegin(GL_TRIANGLES);
-    for (unsigned int i = 0; i < indices.size(); i++) {
-        const vec3& vertex = vertices[indices[i]];
-        const vec2& uv = texCoords[indices[i]];
-
-        glTexCoord2f(uv.x, uv.y);
-        glVertex3f(vertex.x, vertex.y, vertex.z);
-    }
-    glEnd();
+    glBindVertexArray(vao); // Vincula el VAO
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0); // Dibuja usando el EBO
+    glBindVertexArray(0); // Desvincula el VAO
 
     glDisable(GL_TEXTURE_2D);
 
@@ -168,17 +200,11 @@ static bool processEvents() {
 
 int main(int argc, char** argv) {
     MyWindow window("SDL2 Simple Example", WINDOW_SIZE.x, WINDOW_SIZE.y);
+
+    ilInit();
     init_openGL();
 
-    GLuint textureID = LoadTexture("Solid_red.png");
-    if (textureID == 0) {
-        fprintf(stderr, "Error al cargar la textura.\n");
-        return -1;
-    }
-    else
-    {
-        printf("Cargada textura correctamente \n");
-    }
+    GLuint textureID = LoadTexture("Baker_house.png");
     loadModel("BakerHouse.fbx");
 
     while (window.processEvents() && window.isOpen()) {
