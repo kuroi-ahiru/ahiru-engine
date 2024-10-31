@@ -32,16 +32,18 @@ float camZ = cos(camera_angle) * camera_radius;
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 8.0f);
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraDirection = cameraPos - cameraTarget;
+glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
 
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraFront = -cameraDirection;
 
-float yaw = -90.0f; //apunta a -z
-float pitch = 0.0f;
+float yaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
+float pitch = glm::degrees(asin(cameraFront.y));
 bool isMiddleButtonPressed = false;
 int lastMouseX, lastMouseY;
+
+float fov = 45.0f;
 
 // Parámetros de la cuadrícula
 int grid_size = 20;  // Número de líneas en cada dirección (XZ)
@@ -116,14 +118,10 @@ static void display_func() {
 
     glLoadIdentity();
 
-    // Actualizamos la posición de la cámara usando coordenadas polares para rotar sobre el eje XZ con una altura fija
-    float camX = sin(camera_angle) * camera_radius;
-    float camZ = cos(camera_angle) * camera_radius;
-
     // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
     gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
-            cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
-            cameraUp.x, cameraUp.y, cameraUp.z);
+              cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
+              cameraUp.x, cameraUp.y, cameraUp.z);
 
     // Dibujar la cuadrícula del suelo
     draw_grid();
@@ -164,7 +162,7 @@ void updateCameraDirection() {
     int mouseX, mouseY;
     Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
-    if (mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
+    if (mouseState && SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
         if (!isMiddleButtonPressed) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
@@ -172,31 +170,58 @@ void updateCameraDirection() {
         }
 
         //Calculamos el desplazamiento
-        int xOffset = mouseX - lastMouseX;
-        int yOffset = lastMouseY - mouseY;//Invertimos la y
-
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
+        float xOffset = mouseX - lastMouseX;
+        float yOffset = lastMouseY - mouseY;//Invertimos la y
 
         xOffset *= sensitivity;
         yOffset *= sensitivity;
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
 
         //Ajustamos los ángulos
         yaw += xOffset;
         pitch += yOffset;
 
+		//Nos aseguramos de que el ángulo de inclinación no sea demasiado alto
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
         //Actualizamos la dirección de la cámara
-        glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        cameraFront = glm::normalize(front);
+        glm::vec3 newcameraDirection;
+        newcameraDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        newcameraDirection.y = sin(glm::radians(pitch));
+        newcameraDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraFront = glm::normalize(newcameraDirection);
     }
     else {
         isMiddleButtonPressed = false;
     }
 }
 
+void mouseScroll(SDL_Event& event) {
+    if (event.type == SDL_MOUSEWHEEL) {
+        if (event.wheel.y > 0) { //Scroll hacia arriba
+            fov -= 2.0f;
+        }
+        else if (event.wheel.y < 0) { //Scroll hacia abajo
+            fov += 2.0f;
+        }
+
+        if (fov < 1.0f)
+            fov = 1.0f;
+        if (fov > 45.0f)
+            fov = 45.0f;
+
+        //Actualiza la perspectiva con el nuevo FOV
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
+        glMatrixMode(GL_MODELVIEW);
+    }
+}
 
 static bool processEvents() {
     SDL_Event event;
@@ -214,7 +239,7 @@ static bool processEvents() {
 }
 
 int main(int argc, char** argv) {
-    MyWindow window("SDL2 Simple Example", WINDOW_SIZE.x, WINDOW_SIZE.y);
+    MyWindow window("Ahiru Engine", WINDOW_SIZE.x, WINDOW_SIZE.y);
     init_openGL();
 
     // Cargar el modelo
@@ -222,9 +247,11 @@ int main(int argc, char** argv) {
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
+        SDL_Event event;
 
         processInput();
         updateCameraDirection();
+		mouseScroll(event);
         display_func();
         window.swapBuffers();
         const auto t1 = hrclock::now();
