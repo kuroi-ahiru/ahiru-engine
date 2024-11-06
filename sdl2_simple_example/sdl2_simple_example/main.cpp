@@ -157,12 +157,13 @@ static void draw_grid() {
 
 static void display_func(GLuint textureID) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glLoadIdentity();
 
-    float camX = sin(camera_angle) * camera_radius;
-    float camZ = cos(camera_angle) * camera_radius;
-
-    gluLookAt(camX, camera_height, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
+    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+        cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
+        cameraUp.x, cameraUp.y, cameraUp.z);
     draw_grid();
 
     glEnable(GL_TEXTURE_2D);
