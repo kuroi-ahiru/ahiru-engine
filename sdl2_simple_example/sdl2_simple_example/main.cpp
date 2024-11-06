@@ -42,7 +42,7 @@ glm::vec3 cameraFront = -cameraDirection;
 
 float yaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
 float pitch = glm::degrees(asin(cameraFront.y));
-bool isMiddleButtonPressed = false;
+bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
@@ -182,38 +182,20 @@ static void display_func(GLuint textureID) {
     glDisable(GL_TEXTURE_2D);
 }
 
-void processInput() {
+void updateCamera() {
+    const float sensitivity = 0.1f;
+
     const float cameraSpeed = 0.05f;
     const Uint8* state = SDL_GetKeyboardState(NULL);
-
-    // Movimiento hacia adelante y hacia atr�s
-    if (state[SDL_SCANCODE_W]) {
-        cameraPos += cameraSpeed * cameraFront;
-    }
-    if (state[SDL_SCANCODE_S]) {
-        cameraPos -= cameraSpeed * cameraFront;
-    }
-
-    // Movimiento lateral (izquierda y derecha)
-    if (state[SDL_SCANCODE_A]) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-    if (state[SDL_SCANCODE_D]) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-}
-
-void updateCameraDirection() {
-    const float sensitivity = 0.1f;
 
     int mouseX, mouseY;
     Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
-    if (mouseState && SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
-        if (!isMiddleButtonPressed) {
+    if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+        if (!isRightButtonPressed) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
-            isMiddleButtonPressed = true;
+            isRightButtonPressed = true;
         }
 
         //Calculamos el desplazamiento
@@ -242,9 +224,41 @@ void updateCameraDirection() {
         newcameraDirection.y = sin(glm::radians(pitch));
         newcameraDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
         cameraFront = glm::normalize(newcameraDirection);
+
+        // Movimiento hacia adelante y hacia atr�s
+        if (state[SDL_SCANCODE_W]) {
+            cameraPos += cameraSpeed * cameraFront;
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos += 2 * cameraSpeed * cameraFront;
+            }
+        }
+        if (state[SDL_SCANCODE_S]) {
+            cameraPos -= cameraSpeed * cameraFront;
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos -= 2 * cameraSpeed * cameraFront;
+            }
+        }
+
+        // Movimiento lateral (izquierda y derecha)
+        if (state[SDL_SCANCODE_A]) {
+            cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos -= 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            }
+        }
+        if (state[SDL_SCANCODE_D]) {
+            cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos += 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            }
+        }
     }
     else {
-        isMiddleButtonPressed = false;
+        isRightButtonPressed = false;
     }
 }
 
@@ -296,8 +310,7 @@ int main(int argc, char** argv) {
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
 
-        processInput();
-        updateCameraDirection();
+        updateCamera();
         updateZoom();
         display_func(textureID);
         window.swapBuffers();
