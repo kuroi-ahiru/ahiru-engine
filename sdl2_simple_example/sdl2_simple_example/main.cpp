@@ -201,26 +201,26 @@ void updateCameraDirection() {
     }
 }
 
-void mouseScroll(SDL_Event& event) {
-    if (event.type == SDL_MOUSEWHEEL) {
-        if (event.wheel.y > 0) { //Scroll hacia arriba
-            fov -= 2.0f;
-        }
-        else if (event.wheel.y < 0) { //Scroll hacia abajo
-            fov += 2.0f;
-        }
-
-        if (fov < 1.0f)
-            fov = 1.0f;
-        if (fov > 45.0f)
-            fov = 45.0f;
-
-        //Actualiza la perspectiva con el nuevo FOV
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
-        glMatrixMode(GL_MODELVIEW);
+void updateZoom() {
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+    
+    if (state[SDL_SCANCODE_Q]) { //Scroll hacia arriba
+        fov -= 1.0f;
     }
+    else if (state[SDL_SCANCODE_E]) { //Scroll hacia abajo
+        fov += 1.0f;
+    }
+
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f;
+
+    //Actualiza la perspectiva con el nuevo FOV
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
+    glMatrixMode(GL_MODELVIEW);
 }
 
 static bool processEvents() {
@@ -247,11 +247,10 @@ int main(int argc, char** argv) {
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
-        SDL_Event event;
 
         processInput();
         updateCameraDirection();
-		mouseScroll(event);
+        updateZoom();
         display_func();
         window.swapBuffers();
         const auto t1 = hrclock::now();
