@@ -37,8 +37,6 @@ static std::vector<vec3> vertices;
 static std::vector<vec2> texCoords;
 static std::vector<unsigned int> indices;
 
-GLuint vao, vboVertices, vboTexCoords, ebo; // Buffers
-
 static void init_openGL() {
     glewInit();
     if (!GLEW_VERSION_3_0) throw exception("OpenGL 3.0 API is not available.");
@@ -54,10 +52,14 @@ static void init_openGL() {
 static void loadModel(const char* file) {
     const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene) {
-        fprintf(stderr, "Error en cargar el archivo: %s\n", aiGetErrorString());
+        fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
         return;
     }
     printf("Número de mallas: %u\n", scene->mNumMeshes);
+
+    vertices.clear();
+    texCoords.clear();
+    indices.clear();
 
     for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[i];
@@ -68,11 +70,10 @@ static void loadModel(const char* file) {
             vertices.emplace_back(vertex.x, vertex.y, vertex.z);
         }
 
-        // Cargar coordenadas UV
         if (mesh->HasTextureCoords(0)) {
             for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
                 aiVector3D uv = mesh->mTextureCoords[0][v];
-                texCoords.emplace_back(uv.x, uv.y); // Intenta sin invertir
+                texCoords.emplace_back(fmodf(uv.x, 1.0f), fmodf(uv.y, 1.0f));
             }
         }
         else {
@@ -81,7 +82,6 @@ static void loadModel(const char* file) {
             }
         }
 
-        // Cargar índices de las caras
         for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
             aiFace face = mesh->mFaces[f];
             for (unsigned int j = 0; j < face.mNumIndices; j++) {
@@ -91,31 +91,7 @@ static void loadModel(const char* file) {
     }
 
     aiReleaseImport(scene);
-    // Inicializa los buffers después de cargar el modelo
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    // VBO para vértices
-    glGenBuffers(1, &vboVertices);
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // VBO para coordenadas UV
-    glGenBuffers(1, &vboTexCoords);
-    glBindBuffer(GL_ARRAY_BUFFER, vboTexCoords);
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(vec2), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-    glEnableVertexAttribArray(1);
-
-    // EBO para índices
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-
-    glBindVertexArray(0); // Desvincula el VAO
-}
+}   
 
 GLuint LoadTexture(const char* file) {
     ILuint imageID;
@@ -173,9 +149,16 @@ static void display_func(GLuint textureID) {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glBindVertexArray(vao); // Vincula el VAO
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0); // Dibuja usando el EBO
-    glBindVertexArray(0); // Desvincula el VAO
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBegin(GL_TRIANGLES);
+    for (unsigned int i = 0; i < indices.size(); i++) {
+        const vec3& vertex = vertices[indices[i]];
+        const vec2& uv = texCoords[indices[i]];
+        glTexCoord2f(uv.x, uv.y);
+        glVertex3f(vertex.x, vertex.y, vertex.z);
+    }
+    glEnd();
 
     glDisable(GL_TEXTURE_2D);
 
