@@ -50,6 +50,7 @@ static void init_openGL() {
 }
 
 static void loadModel(const char* file) {
+
     const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene) {
         fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
