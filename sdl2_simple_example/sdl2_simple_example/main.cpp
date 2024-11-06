@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
+#include "TextureImporter.h"
+#include "ModelImporter.h"
 #include <IL/il.h>
 #include <GL/glu.h> // para la perspectiva de glu
 #include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
@@ -55,6 +57,8 @@ static std::vector<vec3> vertices;
 static std::vector<vec2> texCoords;
 static std::vector<unsigned int> indices;
 
+ModelImporter modelImporter;
+
 static void init_openGL() {
     glewInit();
     if (!GLEW_VERSION_3_0) throw exception("OpenGL 3.0 API is not available.");
@@ -67,6 +71,7 @@ static void init_openGL() {
     glMatrixMode(GL_MODELVIEW);
 }
 
+//Funciones de loadmodel y loadtexture pendientes de eliminar
 static void loadModel(const char* file) {
 
     const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -169,8 +174,7 @@ static void display_func(GLuint textureID) {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+   
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < indices.size(); i++) {
         const vec3& vertex = vertices[indices[i]];
@@ -290,8 +294,8 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
-    GLuint textureID = LoadTexture("Baker_house.png");
-    loadModel("BakerHouse.fbx");
+    modelImporter.LoadModel("BakerHouse.fbx");
+    GLuint textureID = TextureImporter::LoadTexture("Baker_house.png");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
