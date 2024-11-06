@@ -256,42 +256,28 @@ void updateCamera() {
                 cameraPos += 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
             }
         }
+        //Zoom
+        if (state[SDL_SCANCODE_Q]) { //Añadir zoom
+                fov -= 1.0f;
+        }
+        else if (state[SDL_SCANCODE_E]) { //Quitar zoom
+            fov += 1.0f;
+        }
+        if (fov < 1.0f)
+            fov = 1.0f;
+        if (fov > 45.0f)
+            fov = 45.0f;
+
+        //Actualiza la perspectiva con el nuevo FOV
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
+        glMatrixMode(GL_MODELVIEW);
     }
     else {
         isRightButtonPressed = false;
     }
 }
-
-void updateZoom(SDL_Event& event) {
-    const Uint8* state = SDL_GetKeyboardState(NULL);
-    
-    if (event.type == SDL_MOUSEWHEEL) {
-        printf("rueda detectada ");
-        if (event.wheel.y > 0) { // Scroll hacia arriba
-            //Imprime el valor de fov para depuración
-            printf("rueda arriba ");
-            fov -= 1.0f;
-        }
-        else if (event.wheel.y < 0) { // Scroll hacia abajo
-            //Imprime el valor de fov para depuración
-            printf("rueda abajo ");
-            fov += 1.0f;
-        }
-    }
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
-
-    
-
-    //Actualiza la perspectiva con el nuevo FOV
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
-    glMatrixMode(GL_MODELVIEW);
-}
-
 static bool processEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -301,7 +287,6 @@ static bool processEvents() {
             break;
         default:
             ImGui_ImplSDL2_ProcessEvent(&event);
-            updateZoom(event);
             break;
         }
     }
@@ -315,13 +300,11 @@ int main(int argc, char** argv) {
 
     GLuint textureID = LoadTexture("Baker_house.png");
     loadModel("BakerHouse.fbx");
-    
-    SDL_Event event;
+
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
 
         updateCamera();
-        updateZoom(event);
         display_func(textureID);
         window.swapBuffers();
         const auto t1 = hrclock::now();
