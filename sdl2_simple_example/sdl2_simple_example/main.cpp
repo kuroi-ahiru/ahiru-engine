@@ -50,7 +50,7 @@ int lastMouseX, lastMouseY;
 float fov = 45.0f;
 
 // Par�metros de la cuadr�cula
-int grid_size = 20;
+int grid_size = 30;
 float grid_spacing = 1.5f;
 
 static std::vector<vec3> vertices;
@@ -62,7 +62,7 @@ static void init_openGL() {
     if (!GLEW_VERSION_3_0) throw exception("OpenGL 3.0 API is not available.");
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    glClearColor(0.5, 0.5, 0.5, 1.0);
+    glClearColor(0.15, 0.15, 0.15, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45.0, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
@@ -143,8 +143,11 @@ GLuint LoadTexture(const char* file) {
 }
 
 static void draw_grid() {
+    glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
     glLineWidth(1.2f);
-    glColor3f(0.7f, 0.7f, 0.7f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 
     glBegin(GL_LINES);
     for (int i = -grid_size; i <= grid_size; ++i) {
@@ -155,6 +158,8 @@ static void draw_grid() {
         glVertex3f(grid_size * grid_spacing, 0.0f, i * grid_spacing);
     }
     glEnd();
+    glDisable(GL_BLEND);
+    glPopAttrib();
 }
 
 static void display_func(GLuint textureID) {
