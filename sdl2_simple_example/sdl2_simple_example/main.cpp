@@ -4,6 +4,7 @@
 #include <exception>
 #include <glm/glm.hpp>
 #include "MyWindow.h"
+#include "imgui_impl_sdl2.h"
 #include <IL/il.h>
 #include <GL/glu.h> // para la perspectiva de glu
 #include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
@@ -25,8 +26,8 @@ static const ivec2 WINDOW_SIZE(1300, 800);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
-float camera_angle = 0.0f; // Ángulo de la cámara
-const float camera_radius = 10.0f; // Distancia de la cámara al origen
+float camera_angle = 0.0f; // �ngulo de la c�mara
+const float camera_radius = 10.0f; // distancia de la c�mara al origen
 
 float camX = sin(camera_angle) * camera_radius;
 float camZ = cos(camera_angle) * camera_radius;
@@ -46,7 +47,7 @@ int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
 
-// Parámetros de la cuadrícula
+// Par�metros de la cuadr�cula
 int grid_size = 30;
 float grid_spacing = 1.5f;
 
@@ -67,12 +68,13 @@ static void init_openGL() {
 }
 
 static void loadModel(const char* file) {
+
     const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene) {
         fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
         return;
     }
-    printf("Número de mallas: %u\n", scene->mNumMeshes);
+    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
 
     vertices.clear();
     texCoords.clear();
@@ -108,7 +110,7 @@ static void loadModel(const char* file) {
     }
 
     aiReleaseImport(scene);
-}
+}   
 
 GLuint LoadTexture(const char* file) {
     ILuint imageID;
@@ -164,6 +166,7 @@ static void draw_grid() {
     glPopAttrib();
 }
 
+
 static void display_func(GLuint textureID) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -178,6 +181,8 @@ static void display_func(GLuint textureID) {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < indices.size(); i++) {
         const vec3& vertex = vertices[indices[i]];
@@ -189,11 +194,11 @@ static void display_func(GLuint textureID) {
     glDisable(GL_TEXTURE_2D);
 }
 
-static void processInput() {
-    const uint8_t* state = SDL_GetKeyboardState(NULL);
-    float cameraSpeed = 0.1f;
+void processInput() {
+    const float cameraSpeed = 0.05f;
+    const Uint8* state = SDL_GetKeyboardState(NULL);
 
-    // Movimiento hacia adelante y hacia atrás
+    // Movimiento hacia adelante y hacia atr�s
     if (state[SDL_SCANCODE_W]) {
         cameraPos += cameraSpeed * cameraFront;
     }
@@ -201,7 +206,7 @@ static void processInput() {
         cameraPos -= cameraSpeed * cameraFront;
     }
 
-    // Movimiento hacia la izquierda y la derecha
+    // Movimiento lateral (izquierda y derecha)
     if (state[SDL_SCANCODE_A]) {
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     }
@@ -210,39 +215,107 @@ static void processInput() {
     }
 }
 
-int main(int argc, char* argv[]) {
+void updateCameraDirection() {
+    const float sensitivity = 0.1f;
+
+    int mouseX, mouseY;
+    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+
+    if (mouseState && SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
+        if (!isMiddleButtonPressed) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            isMiddleButtonPressed = true;
+        }
+
+        //Calculamos el desplazamiento
+        float xOffset = mouseX - lastMouseX;
+        float yOffset = lastMouseY - mouseY;//Invertimos la y
+
+        xOffset *= sensitivity;
+        yOffset *= sensitivity;
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        //Ajustamos los �ngulos
+        yaw += xOffset;
+        pitch += yOffset;
+
+		//Nos aseguramos de que el �ngulo de inclinaci�n no sea demasiado alto
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
+        //Actualizamos la direcci�n de la c�mara
+        glm::vec3 newcameraDirection;
+        newcameraDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        newcameraDirection.y = sin(glm::radians(pitch));
+        newcameraDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraFront = glm::normalize(newcameraDirection);
+    }
+    else {
+        isMiddleButtonPressed = false;
+    }
+}
+
+void updateZoom() {
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+    
+    if (state[SDL_SCANCODE_Q]) { //Scroll hacia arriba
+        fov -= 1.0f;
+    }
+    else if (state[SDL_SCANCODE_E]) { //Scroll hacia abajo
+        fov += 1.0f;
+    }
+
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f;
+
+    //Actualiza la perspectiva con el nuevo FOV
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+static bool processEvents() {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_QUIT:
+            return false;
+            break;
+        default:
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            break;
+        }
+    }
+    return true;
+}
+
+int main(int argc, char** argv) {
     MyWindow window("Ahiru Engine", WINDOW_SIZE.x, WINDOW_SIZE.y);
     ilInit();
     init_openGL();
+
     GLuint textureID = LoadTexture("Baker_house.png");
-    SDL_Event event;
+    loadModel("BakerHouse.fbx");
 
-    // Setup de drag-and-drop de archivos
-    while (window.isOpen()) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                window.close();
-            }
-            if (event.type == SDL_DROPFILE) {
-                const char* droppedFile = event.drop.file;
-                printf("Archivo soltado: %s\n", droppedFile);
-                if (strstr(droppedFile, ".fbx")) {
-                    loadModel(droppedFile);
-                }
-                else if (strstr(droppedFile, ".png")) {
-                    textureID = LoadTexture(droppedFile);
-                }
-                SDL_free(event.drop.file); // Liberar el archivo después de usarlo
-            }
-        }
+    while (window.processEvents() && window.isOpen()) {
+        const auto t0 = hrclock::now();
 
-        // Procesar la entrada para la cámara
         processInput();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        display_func(textureID);  // Dibuja el modelo y la escena
+        updateCameraDirection();
+        updateZoom();
+        display_func(textureID);
         window.swapBuffers();
-        std::this_thread::sleep_for(FRAME_DT); // Control de la velocidad de los fotogramas
+        const auto t1 = hrclock::now();
+        const auto dt = t1 - t0;
+        if (dt < FRAME_DT) this_thread::sleep_for(FRAME_DT - dt);
     }
 
     return 0;
