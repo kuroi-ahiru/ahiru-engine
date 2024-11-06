@@ -41,7 +41,9 @@ glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = -cameraDirection;
 
 float yaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
+float initialyaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
 float pitch = glm::degrees(asin(cameraFront.y));
+float initialpitch = glm::degrees(asin(cameraFront.y));
 bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
@@ -189,6 +191,7 @@ void updateCamera() {
     const Uint8* state = SDL_GetKeyboardState(NULL);
 
     int mouseX, mouseY;
+	float xOffset, yOffset;
     Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
     if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
@@ -199,8 +202,8 @@ void updateCamera() {
         }
 
         //Calculamos el desplazamiento
-        float xOffset = mouseX - lastMouseX;
-        float yOffset = lastMouseY - mouseY;//Invertimos la y
+        xOffset = mouseX - lastMouseX;
+        yOffset = lastMouseY - mouseY;//Invertimos la y
 
         xOffset *= sensitivity;
         yOffset *= sensitivity;
@@ -256,6 +259,7 @@ void updateCamera() {
                 cameraPos += 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
             }
         }
+
         //Zoom
         if (state[SDL_SCANCODE_Q]) { //Añadir zoom
                 fov -= 1.0f;
@@ -276,6 +280,14 @@ void updateCamera() {
     }
     else {
         isRightButtonPressed = false;
+    }
+
+    //Centrar mirada al objeto
+    if (state[SDL_SCANCODE_F]) {
+        //Actualizamos la direcci�n de la c�mara
+        cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
+		yaw = initialyaw;
+		pitch = initialpitch;
     }
 }
 static bool processEvents() {
