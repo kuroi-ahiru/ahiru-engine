@@ -44,10 +44,12 @@ float yaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
 float initialyaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
 float pitch = glm::degrees(asin(cameraFront.y));
 float initialpitch = glm::degrees(asin(cameraFront.y));
+bool isLeftButtonPressed = false;
 bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
+bool rotation = false;
 
 // Par�metros de la cuadr�cula
 int grid_size = 30;
@@ -204,6 +206,7 @@ void updateCamera() {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
             isRightButtonPressed = true;
+            rotation = false;
         }
 
         //Calculamos el desplazamiento
@@ -283,7 +286,24 @@ void updateCamera() {
         gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
         glMatrixMode(GL_MODELVIEW);
     }
+    else if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT))
+    {
+        if (!isLeftButtonPressed) {
+            isLeftButtonPressed = true;
+        }
+        if (state[SDL_SCANCODE_LALT]) { //Añadir zoom
+            if (rotation == false)
+            {
+                rotation = true;
+			}
+            else
+            {
+                rotation = false;
+            }
+        }
+    }
     else {
+		isLeftButtonPressed = false;
         isRightButtonPressed = false;
     }
 
@@ -293,7 +313,20 @@ void updateCamera() {
         cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
 		yaw = initialyaw;
 		pitch = initialpitch;
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
     }
+
+    if (rotation == true) {
+        camera_angle += 0.005f;
+        if (camera_angle > 2.0f * 3.14159265f) camera_angle = 0.0f;
+        cameraPos.x = sin(camera_angle) * camera_radius;
+        cameraPos.z = cos(camera_angle) * camera_radius;
+        cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+    }
+
 }
 static bool processEvents() {
     SDL_Event event;
