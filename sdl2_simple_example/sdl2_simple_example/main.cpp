@@ -5,11 +5,12 @@
 #include <glm/glm.hpp>
 #include "MyWindow.h"
 #include "imgui_impl_sdl2.h"
-#include "TextureImporter.h"
-#include "ModelImporter.h"
 #include <IL/il.h>
 #include <GL/glu.h> // para la perspectiva de glu
 #include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
+
+#include "TextureImporter.h"
+#include "ModelImporter.h"
 
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -72,78 +73,78 @@ static void init_openGL() {
 }
 
 //Funciones de loadmodel y loadtexture pendientes de eliminar
-static void loadModel(const char* file) {
+//static void loadModel(const char* file) {
+//
+//    const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
+//    if (!scene) {
+//        fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
+//        return;
+//    }
+//    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
+//
+//    vertices.clear();
+//    texCoords.clear();
+//    indices.clear();
+//
+//    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+//        aiMesh* mesh = scene->mMeshes[i];
+//        printf("\nMalla %u:\n", i);
+//
+//        for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//            aiVector3D vertex = mesh->mVertices[v];
+//            vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+//        }
+//
+//        if (mesh->HasTextureCoords(0)) {
+//            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//                aiVector3D uv = mesh->mTextureCoords[0][v];
+//                texCoords.emplace_back(fmodf(uv.x, 1.0f), fmodf(uv.y, 1.0f));
+//            }
+//        }
+//        else {
+//            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//                texCoords.emplace_back(0.0f, 0.0f);
+//            }
+//        }
+//
+//        for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
+//            aiFace face = mesh->mFaces[f];
+//            for (unsigned int j = 0; j < face.mNumIndices; j++) {
+//                indices.push_back(face.mIndices[j]);
+//            }
+//        }
+//    }
+//
+//    aiReleaseImport(scene);
+//}   
 
-    const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
-    if (!scene) {
-        fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
-        return;
-    }
-    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
-
-    vertices.clear();
-    texCoords.clear();
-    indices.clear();
-
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[i];
-        printf("\nMalla %u:\n", i);
-
-        for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-            aiVector3D vertex = mesh->mVertices[v];
-            vertices.emplace_back(vertex.x, vertex.y, vertex.z);
-        }
-
-        if (mesh->HasTextureCoords(0)) {
-            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-                aiVector3D uv = mesh->mTextureCoords[0][v];
-                texCoords.emplace_back(fmodf(uv.x, 1.0f), fmodf(uv.y, 1.0f));
-            }
-        }
-        else {
-            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-                texCoords.emplace_back(0.0f, 0.0f);
-            }
-        }
-
-        for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
-            aiFace face = mesh->mFaces[f];
-            for (unsigned int j = 0; j < face.mNumIndices; j++) {
-                indices.push_back(face.mIndices[j]);
-            }
-        }
-    }
-
-    aiReleaseImport(scene);
-}   
-
-GLuint LoadTexture(const char* file) {
-    ILuint imageID;
-    ilGenImages(1, &imageID);
-    ilBindImage(imageID);
-
-    if (ilLoad(IL_TYPE_UNKNOWN, (wchar_t*)file)) {
-        ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-        printf("Cargada textura correctamente \n");
-    }
-    else {
-        fprintf(stderr, "Error al cargar la textura.\n");
-    }
-
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ilGetInteger(IL_IMAGE_WIDTH),
-        ilGetInteger(IL_IMAGE_HEIGHT), 0, GL_RGBA,
-        GL_UNSIGNED_BYTE, ilGetData());
-
-    ilDeleteImages(1, &imageID);
-    return textureID;
-}
+//GLuint LoadTexture(const char* file) {
+//    ILuint imageID;
+//    ilGenImages(1, &imageID);
+//    ilBindImage(imageID);
+//
+//    if (ilLoad(IL_TYPE_UNKNOWN, (wchar_t*)file)) {
+//        ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+//        printf("Cargada textura correctamente \n");
+//    }
+//    else {
+//        fprintf(stderr, "Error al cargar la textura.\n");
+//    }
+//
+//    GLuint textureID;
+//    glGenTextures(1, &textureID);
+//    glBindTexture(GL_TEXTURE_2D, textureID);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ilGetInteger(IL_IMAGE_WIDTH),
+//        ilGetInteger(IL_IMAGE_HEIGHT), 0, GL_RGBA,
+//        GL_UNSIGNED_BYTE, ilGetData());
+//
+//    ilDeleteImages(1, &imageID);
+//    return textureID;
+//}
 
 static void draw_grid() {
     glLineWidth(1.2f);

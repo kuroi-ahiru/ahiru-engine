@@ -2,30 +2,28 @@
 #include <iostream>
 #include <string>
 
-// Función auxiliar para convertir de char* a wchar_t* usando mbstowcs_s
-std::wstring ConvertToWideChar(const char* file) {
-    size_t len = strlen(file) + 1;
-    std::wstring wfile(len, L'#');
-    size_t convertedChars = 0;
-    mbstowcs_s(&convertedChars, &wfile[0], len, file, _TRUNCATE);
-    return wfile;
-}
+//// Función auxiliar para convertir de char* a wchar_t* usando mbstowcs_s
+//std::wstring ConvertToWideChar(const char* file) {
+//    size_t len = strlen(file) + 1;
+//    std::wstring wfile(len, L'#');
+//    size_t convertedChars = 0;
+//    mbstowcs_s(&convertedChars, &wfile[0], len, file, _TRUNCATE);
+//    return wfile;
+//}
 
 GLuint TextureImporter::LoadTexture(const char* file) {
     ILuint imageID;
     ilGenImages(1, &imageID);
     ilBindImage(imageID);
 
-    // Convertimos la ruta del archivo a wchar_t*
-    std::wstring wfile = ConvertToWideChar(file);
-
-    if (!ilLoadImage(wfile.c_str())) {
-        std::cerr << "Error al cargar la textura: " << file << std::endl;
-        ilDeleteImages(1, &imageID);
-        return 0;
+    if (ilLoad(IL_TYPE_UNKNOWN, (wchar_t*)file)) {
+        ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+        printf("Cargada textura correctamente \n");
+    }
+    else {
+        fprintf(stderr, "Error al cargar la textura.\n");
     }
 
-    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);

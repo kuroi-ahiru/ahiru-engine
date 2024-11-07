@@ -41,6 +41,9 @@ bool ModelImporter::LoadModel(const char* file) {
             }
         }
     }
+    std::cout << "Vertices cargados: " << vertices.size() << std::endl;
+    std::cout << "Coordenadas UV cargadas: " << texCoords.size() << std::endl;
+    std::cout << "Indices cargados: " << indices.size() << std::endl;
 
     aiReleaseImport(scene);
     return true;
