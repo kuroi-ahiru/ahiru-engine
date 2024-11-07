@@ -7,6 +7,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include "SDL2/SDL.h"
+#include <cstdlib>
 using namespace std;
 
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
@@ -56,16 +57,45 @@ void MyWindow::swapBuffers() const {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
+    static bool show_about = false;
+
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Menu")) {
-            if (ImGui::MenuItem("Adeu")) {
-                SDL_Event quit_event;
-                quit_event.type = SDL_QUIT;
-                SDL_PushEvent(&quit_event);
-            }
-            ImGui::EndMenu();
+		//TODO Añadir menús del editor
+        if (ImGui::MenuItem("GitHub")) {
+        #ifdef _WIN32
+                    std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
+        #elif __APPLE__
+                    std::system("open https://github.com/kuroi-ahiru/ahiru-engine");
+        #elif __linux__
+                    std::system("xdg-open https://github.com/kuroi-ahiru/ahiru-engine");
+        #endif
+        }
+        if (ImGui::MenuItem("About")) {
+            show_about = true;
+        }
+        if (ImGui::MenuItem("Quit")) {
+            SDL_Event quit_event;
+            quit_event.type = SDL_QUIT;
+            SDL_PushEvent(&quit_event);
         }
         ImGui::EndMainMenuBar();
+    }
+
+    if (show_about) {
+        ImGui::OpenPopup("About");
+        show_about = false;
+    }
+
+    if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Ahiru Engine: \n");
+        ImGui::Text("Version: 0.1.0");
+        ImGui::Text("Developer: Kuroi Ahiru");
+        ImGui::Text("Libraries Used: SDL2, OpenGL, ImGui, Devil, Assimp");
+        ImGui::Separator();
+        if (ImGui::Button("OK", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     ImGui::Render();
