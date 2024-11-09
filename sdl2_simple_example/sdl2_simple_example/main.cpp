@@ -437,14 +437,7 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
-    //added scene para facilitar añadir lo del drag&drop y q la lista de los gameobject sea dinamica, sino tirar 1 commit atras
     Scene scene;
-
-    // Cargar los modelos iniciales
-    auto bakerHouse = createGameObject("BakerHouse.fbx", "Baker_house.png");
-    if (bakerHouse) {
-        scene.AddGameObject(bakerHouse);
-    }
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
@@ -463,12 +456,17 @@ int main(int argc, char** argv) {
         // Actualizar y renderizar la escena completa
         scene.Update();
         scene.Render();
-
+        //window.display_func(); DESCOMENTAR ESTA LINEA PARA TOQUETEAR IMGUI Y TAL
         window.swapBuffers();
 
         std::string droppedFile = window.getDroppedFile();
         if (!droppedFile.empty() && droppedFile.find(".fbx") != std::string::npos) {
-            loadModel(droppedFile.c_str());
+
+            auto bakerHouse = createGameObject(droppedFile.c_str(), "Baker_house.png");
+
+            if (bakerHouse) {
+                scene.AddGameObject(bakerHouse);
+            }
         }
 
         const auto t1 = hrclock::now();
