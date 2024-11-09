@@ -352,6 +352,7 @@ int main(int argc, char** argv) {
 
         updateCamera();
         display_func(textureID);
+        window.display_func();
         window.swapBuffers();
 
         std::string droppedFile = window.getDroppedFile();

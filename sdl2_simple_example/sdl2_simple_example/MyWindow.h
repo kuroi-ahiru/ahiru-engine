@@ -40,5 +40,6 @@ public:
 
 	bool processEvents(IEventProcessor* event_processor = nullptr);
 	void swapBuffers() const;
+	void display_func();
 	std::string getDroppedFile();
 };

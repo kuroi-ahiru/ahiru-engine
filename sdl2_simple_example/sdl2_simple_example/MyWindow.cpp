@@ -11,7 +11,12 @@
 #include <windows.h>
 #include <psapi.h>
 #include <iostream>
+#include "imgui_internal.h"
+#include <cmath>
+#include <algorithm>
 using namespace std;
+
+ImGuiIO* g_io = nullptr;
 
 Uint32 lastTime = 0;
 Uint32 currentTime;
@@ -21,12 +26,11 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
     open(title, width, height);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
 
-    // Habilitar el docking
-
-    // Si quieres habilitar navegaci�n por teclado:
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    g_io = &ImGui::GetIO();
+    g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable keyboard 
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable docking
+ 
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
 }
@@ -37,6 +41,7 @@ MyWindow::~MyWindow() {
     ImGui::DestroyContext();
 
     close();
+    SDL_Quit();
 }
 
 void MyWindow::open(const char* title, unsigned short width, unsigned short height) {
@@ -74,20 +79,26 @@ size_t getMemoryUsage() {
 }
 
 void MyWindow::swapBuffers() const {
+    SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
+}
+
+
+void MyWindow::display_func() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
     static bool show_about = false;
     static bool show_performance = false;
+    float menuHeight = 0.0f;
 
     if (ImGui::BeginMainMenuBar()) {
-		//TODO A�adir men�s del editor
+        menuHeight = ImGui::GetWindowSize().y; 
         if (ImGui::MenuItem("Performance")) {
             show_performance = !show_performance;
         }
         if (ImGui::MenuItem("GitHub")) {
-        std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
+            std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
         }
         if (ImGui::MenuItem("About")) {
             show_about = true;
@@ -100,23 +111,22 @@ void MyWindow::swapBuffers() const {
         ImGui::EndMainMenuBar();
     }
 
-    if (show_about) {
-        ImGui::OpenPopup("About");
-        show_about = false;
-    }
+    ImGui::SetNextWindowPos(ImVec2(0, menuHeight)); 
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));  
+    ImGui::Begin("DockSpace Demo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
 
-    //Ventana de performance
+    ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
+    ImGui::End();
+
     if (show_performance) {
         ImGui::Begin("Performance", &show_performance, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
-        //Calcular FPS manualmente
         currentTime = SDL_GetTicks();
         fps = 1000.0f / (currentTime - lastTime);
         lastTime = currentTime;
         ImGui::Text("FPS: %.1f", fps);
 
-        //Uso de memoria real
-        size_t memory_mb = getMemoryUsage() / 1024; //KB a MB
+        size_t memory_mb = getMemoryUsage() / 1024;
         ImGui::Text("Memory Usage: %zu MB", memory_mb);
 
         static float fps_history[100] = {};
@@ -135,6 +145,11 @@ void MyWindow::swapBuffers() const {
         ImGui::End();
     }
 
+    if (show_about) {
+        ImGui::OpenPopup("About");
+        show_about = false;
+    }
+
     if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Ahiru Engine: \n");
         ImGui::Text("Version: 0.1.0");
@@ -149,9 +164,8 @@ void MyWindow::swapBuffers() const {
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
 }
+
 
 bool MyWindow::processEvents(IEventProcessor* event_processor) {
     SDL_Event e;
