@@ -9,6 +9,7 @@
 #include <GL/glu.h> // para la perspectiva de glu
 #include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
 
+#include "Scene.h"
 #include "GameObject.h"
 #include "ComponentMesh.h"
 
@@ -444,15 +445,21 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
-    // Cargar modelo bakerhouse por defecto como GameObjects, pending to check
-    std::vector<std::shared_ptr<GameObject>> gameObjects;
-    gameObjects.push_back(createGameObject("BakerHouse.fbx", "Baker_house.png"));
+    //added scene para facilitar añadir lo del drag&drop y q la lista de los gameobject sea dinamica, sino tirar 1 commit atras
+    Scene scene;
+
+    // Cargar los modelos iniciales
+    auto bakerHouse = createGameObject("BakerHouse.fbx", "Baker_house.png");
+    if (bakerHouse) {
+        scene.AddGameObject(bakerHouse);
+    }
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
 
         updateCamera();
 
+        // pongo aqui lo de la camara pq me he cargado la display funcion
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
@@ -461,12 +468,9 @@ int main(int argc, char** argv) {
 
         draw_grid();
 
-        // Renderizar todos los GameObjects
-        for (auto& gameObject : gameObjects) {
-            if (gameObject) {
-                gameObject->Render();
-            }
-        }
+        // Actualizar y renderizar la escena completa
+        scene.Update();
+        scene.Render();
 
         window.swapBuffers();
         const auto t1 = hrclock::now();
