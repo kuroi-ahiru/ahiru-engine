@@ -134,6 +134,8 @@
   <ItemGroup>
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentMesh.h" />
+    <ClInclude Include="ComponentTexture.h" />
+    <ClInclude Include="ComponentTransform.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="MyWindow.h" />
     <ClInclude Include="Scene.h" />
