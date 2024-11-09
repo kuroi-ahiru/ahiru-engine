@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
+#include <string>
 
 
 class IEventProcessor {
@@ -16,6 +17,8 @@ class MyWindow {
 
 	unsigned short _width = 800;
 	unsigned short _height = 600;
+
+	std::string droppedFile;
 
 public:
 	int width() const { return _width; }
@@ -37,5 +40,5 @@ public:
 
 	bool processEvents(IEventProcessor* event_processor = nullptr);
 	void swapBuffers() const;
-
+	std::string getDroppedFile();
 };

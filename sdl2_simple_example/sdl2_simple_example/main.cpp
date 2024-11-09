@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
     init_openGL();
 
     GLuint textureID = LoadTexture("Baker_house.png");
-    loadModel("BakerHouse.fbx");
+    //loadModel("BakerHouse.fbx");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
@@ -358,6 +358,12 @@ int main(int argc, char** argv) {
         updateCamera();
         display_func(textureID);
         window.swapBuffers();
+
+        std::string droppedFile = window.getDroppedFile();
+        if (!droppedFile.empty() && droppedFile.find(".fbx") != std::string::npos) {
+            loadModel(droppedFile.c_str());
+        }
+
         const auto t1 = hrclock::now();
         const auto dt = t1 - t0;
         if (dt < FRAME_DT) this_thread::sleep_for(FRAME_DT - dt);

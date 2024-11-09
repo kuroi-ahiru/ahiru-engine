@@ -8,11 +8,13 @@
 #include "imgui_impl_opengl3.h"
 #include "SDL2/SDL.h"
 #include <cstdlib>
+#include <iostream>
+
 using namespace std;
 
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
     open(title, width, height);
-
+    SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -109,9 +111,25 @@ bool MyWindow::processEvents(IEventProcessor* event_processor) {
     while (SDL_PollEvent(&e)) {
         ImGui_ImplSDL2_ProcessEvent(&e);
         if (event_processor) event_processor->processEvent(e);
+
         switch (e.type) {
-        case SDL_QUIT: close(); return false;
+        case SDL_QUIT:
+            close();
+            return false;
+
+        case SDL_DROPFILE: {
+            char* file = e.drop.file;
+            droppedFile = file; // Almacena el archivo soltado en droppedFile
+            SDL_free(file);     // Libera la memoria
+            break;
+        }
         }
     }
     return true;
+}
+
+std::string MyWindow::getDroppedFile() {
+    std::string file = droppedFile;
+    droppedFile.clear();
+    return file;
 }
