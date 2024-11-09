@@ -7,7 +7,7 @@
 #include "imgui_impl_sdl2.h"
 #include <IL/il.h>
 #include <GL/glu.h> // para la perspectiva de glu
-#include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
+#include <glm/gtc/matrix_transform.hpp> 
 
 #include <stdio.h>
 #include <assimp/cimport.h>
@@ -26,8 +26,8 @@ static const ivec2 WINDOW_SIZE(1300, 800);
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
-float camera_angle = 0.0f; // �ngulo de la c�mara
-const float camera_radius = 10.0f; // distancia de la c�mara al origen
+float camera_angle = 0.0f; // angulo d camara
+const float camera_radius = 10.0f; // distancia de la camara al origen
 
 float camX = sin(camera_angle) * camera_radius;
 float camZ = cos(camera_angle) * camera_radius;
@@ -51,7 +51,7 @@ int lastMouseX, lastMouseY;
 float fov = 45.0f;
 bool rotation = false;
 
-// Par�metros de la cuadr�cula
+// parametros para el grid
 int grid_size = 30;
 float grid_spacing = 1.5f;
 
@@ -170,7 +170,7 @@ static void display_func(GLuint textureID) {
 
     glLoadIdentity();
 
-    // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
+    // posicionar la camara y rotar
     gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
         cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
         cameraUp.x, cameraUp.y, cameraUp.z);
@@ -210,7 +210,6 @@ void updateCamera() {
             rotation = false;
         }
 
-        //Calculamos el desplazamiento
         xOffset = mouseX - lastMouseX;
         yOffset = lastMouseY - mouseY;//Invertimos la y
 
@@ -220,24 +219,20 @@ void updateCamera() {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
 
-        //Ajustamos los �ngulos
         yaw += xOffset;
         pitch += yOffset;
 
-		//Nos aseguramos de que el �ngulo de inclinaci�n no sea demasiado alto
         if (pitch > 89.0f)
             pitch = 89.0f;
         if (pitch < -89.0f)
             pitch = -89.0f;
 
-        //Actualizamos la direcci�n de la c�mara
         glm::vec3 newcameraDirection;
         newcameraDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         newcameraDirection.y = sin(glm::radians(pitch));
         newcameraDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
         cameraFront = glm::normalize(newcameraDirection);
 
-        // Movimiento hacia adelante y hacia atr�s
         if (state[SDL_SCANCODE_W]) {
             cameraPos += cameraSpeed * cameraFront;
             if (state[SDL_SCANCODE_LSHIFT])
@@ -253,7 +248,6 @@ void updateCamera() {
             }
         }
 
-        // Movimiento lateral (izquierda y derecha)
         if (state[SDL_SCANCODE_A]) {
             cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
             if (state[SDL_SCANCODE_LSHIFT])
@@ -269,7 +263,6 @@ void updateCamera() {
             }
         }
 
-        //Zoom
         if (state[SDL_SCANCODE_Q]) { //Añadir zoom
                 fov -= 1.0f;
         }
@@ -310,7 +303,6 @@ void updateCamera() {
 
     //Centrar mirada al objeto
     if (state[SDL_SCANCODE_F]) {
-        //Actualizamos la direcci�n de la c�mara
         cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
 		yaw = initialyaw;
 		pitch = initialpitch;
@@ -349,7 +341,10 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
+    // Por aqui se cambia la textura a mano a partir del path
     GLuint textureID = LoadTexture("Baker_house.png");
+
+	// ANtigua carga de modelo a mano, ahora se carga con el drop de archivos
     //loadModel("BakerHouse.fbx");
 
     while (window.processEvents() && window.isOpen()) {
