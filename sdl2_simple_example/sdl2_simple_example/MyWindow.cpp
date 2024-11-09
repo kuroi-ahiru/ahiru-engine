@@ -16,6 +16,12 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
     open(title, width, height);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Habilitar el docking
+
+    // Si quieres habilitar navegación por teclado:
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
 }

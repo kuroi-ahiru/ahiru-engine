@@ -78,7 +78,7 @@ static void loadModel(const char* file) {
         fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
         return;
     }
-    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
+    printf("Numero de mallas: %u\n", scene->mNumMeshes);
 
     vertices.clear();
     texCoords.clear();
@@ -345,7 +345,7 @@ int main(int argc, char** argv) {
     GLuint textureID = LoadTexture("Baker_house.png");
 
 	// ANtigua carga de modelo a mano, ahora se carga con el drop de archivos
-    //loadModel("BakerHouse.fbx");
+    loadModel("BakerHouse.fbx");
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
