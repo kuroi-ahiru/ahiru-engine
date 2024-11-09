@@ -3,17 +3,25 @@
 
 #include <vector>
 #include <memory>
+#include <GL/glew.h>
 #include "GameObject.h"
+#include <glm/glm.hpp>
 
 class Scene {
 public:
-    Scene() = default;
-    ~Scene() = default;
+    Scene();
+    ~Scene();
 
     void AddGameObject(std::shared_ptr<GameObject> gameObject);
     void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
     void Render();
     void Update();
+
+    std::shared_ptr<GameObject> CreateGameObject(const char* modelFile, const char* textureFile);
+
+    bool LoadModel(const char* modelFile, std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& texCoords, std::vector<unsigned int>& indices);
+    GLuint LoadTexture(const char* textureFile);
+    void DrawGrid(int grid_size = 30, float grid_spacing = 1.5f);
 
 private:
     std::vector<std::shared_ptr<GameObject>> gameObjects;
