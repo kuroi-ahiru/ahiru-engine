@@ -8,9 +8,14 @@
 #include "imgui_impl_opengl3.h"
 #include "SDL2/SDL.h"
 #include <cstdlib>
+#include <windows.h>
+#include <psapi.h>
 #include <iostream>
-
 using namespace std;
+
+Uint32 lastTime = 0;
+Uint32 currentTime;
+float fps = 0.0f;
 
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
     open(title, width, height);
@@ -20,7 +25,7 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
 
     // Habilitar el docking
 
-    // Si quieres habilitar navegación por teclado:
+    // Si quieres habilitar navegaciï¿½n por teclado:
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -60,23 +65,29 @@ void MyWindow::close() {
     _window = nullptr;
 }
 
+size_t getMemoryUsage() {
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+        return pmc.PagefileUsage / 1024; //bytes a KB
+    }
+    return 0;
+}
+
 void MyWindow::swapBuffers() const {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
     static bool show_about = false;
+    static bool show_performance = false;
 
     if (ImGui::BeginMainMenuBar()) {
-		//TODO Añadir menús del editor
+		//TODO Aï¿½adir menï¿½s del editor
+        if (ImGui::MenuItem("Performance")) {
+            show_performance = !show_performance;
+        }
         if (ImGui::MenuItem("GitHub")) {
-        #ifdef _WIN32
-                    std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
-        #elif __APPLE__
-                    std::system("open https://github.com/kuroi-ahiru/ahiru-engine");
-        #elif __linux__
-                    std::system("xdg-open https://github.com/kuroi-ahiru/ahiru-engine");
-        #endif
+        std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
         }
         if (ImGui::MenuItem("About")) {
             show_about = true;
@@ -92,6 +103,36 @@ void MyWindow::swapBuffers() const {
     if (show_about) {
         ImGui::OpenPopup("About");
         show_about = false;
+    }
+
+    //Ventana de performance
+    if (show_performance) {
+        ImGui::Begin("Performance", &show_performance, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+
+        //Calcular FPS manualmente
+        currentTime = SDL_GetTicks();
+        fps = 1000.0f / (currentTime - lastTime);
+        lastTime = currentTime;
+        ImGui::Text("FPS: %.1f", fps);
+
+        //Uso de memoria real
+        size_t memory_mb = getMemoryUsage() / 1024; //KB a MB
+        ImGui::Text("Memory Usage: %zu MB", memory_mb);
+
+        static float fps_history[100] = {};
+        static int fps_index = 0;
+        fps_history[fps_index] = fps;
+        fps_index = (fps_index + 1) % 100;
+
+        static float memory_history[100] = {};
+        static int memory_index = 0;
+        memory_history[memory_index] = static_cast<float>(memory_mb);
+        memory_index = (memory_index + 1) % 100;
+
+        ImGui::PlotLines("FPS", fps_history, IM_ARRAYSIZE(fps_history), 0, nullptr, 0.0f, 120.0f, ImVec2(0, 80));
+        ImGui::PlotLines("Memory Usage (KB)", memory_history, IM_ARRAYSIZE(memory_history), 0, nullptr, 0.0f, 300.0f, ImVec2(0, 80));
+
+        ImGui::End();
     }
 
     if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
