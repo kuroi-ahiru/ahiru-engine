@@ -41,11 +41,15 @@ glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = -cameraDirection;
 
 float yaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
+float initialyaw = glm::degrees(atan2(cameraFront.z, cameraFront.x));
 float pitch = glm::degrees(asin(cameraFront.y));
-bool isMiddleButtonPressed = false;
+float initialpitch = glm::degrees(asin(cameraFront.y));
+bool isLeftButtonPressed = false;
+bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
+bool rotation = false;
 
 // Par�metros de la cuadr�cula
 int grid_size = 30;
@@ -141,15 +145,11 @@ GLuint LoadTexture(const char* file) {
 }
 
 static void draw_grid() {
-    // Guardar los atributos actuales de color y mezcla
     glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-
-    glLineWidth(1.5f);
-
-    // Activar la mezcla y configurar el color con transparencia
+    glLineWidth(1.2f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);  // Blanco con 30% de opacidad
+    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 
     glBegin(GL_LINES);
     for (int i = -grid_size; i <= grid_size; ++i) {
@@ -160,8 +160,6 @@ static void draw_grid() {
         glVertex3f(grid_size * grid_spacing, 0.0f, i * grid_spacing);
     }
     glEnd();
-
-    // Deshabilitar la mezcla y restaurar atributos anteriores
     glDisable(GL_BLEND);
     glPopAttrib();
 }
@@ -194,43 +192,27 @@ static void display_func(GLuint textureID) {
     glDisable(GL_TEXTURE_2D);
 }
 
-void processInput() {
+void updateCamera() {
+    const float sensitivity = 0.1f;
+
     const float cameraSpeed = 0.05f;
     const Uint8* state = SDL_GetKeyboardState(NULL);
 
-    // Movimiento hacia adelante y hacia atr�s
-    if (state[SDL_SCANCODE_W]) {
-        cameraPos += cameraSpeed * cameraFront;
-    }
-    if (state[SDL_SCANCODE_S]) {
-        cameraPos -= cameraSpeed * cameraFront;
-    }
-
-    // Movimiento lateral (izquierda y derecha)
-    if (state[SDL_SCANCODE_A]) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-    if (state[SDL_SCANCODE_D]) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-}
-
-void updateCameraDirection() {
-    const float sensitivity = 0.1f;
-
     int mouseX, mouseY;
+	float xOffset, yOffset;
     Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
-    if (mouseState && SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
-        if (!isMiddleButtonPressed) {
+    if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+        if (!isRightButtonPressed) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
-            isMiddleButtonPressed = true;
+            isRightButtonPressed = true;
+            rotation = false;
         }
 
         //Calculamos el desplazamiento
-        float xOffset = mouseX - lastMouseX;
-        float yOffset = lastMouseY - mouseY;//Invertimos la y
+        xOffset = mouseX - lastMouseX;
+        yOffset = lastMouseY - mouseY;//Invertimos la y
 
         xOffset *= sensitivity;
         yOffset *= sensitivity;
@@ -254,34 +236,99 @@ void updateCameraDirection() {
         newcameraDirection.y = sin(glm::radians(pitch));
         newcameraDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
         cameraFront = glm::normalize(newcameraDirection);
+
+        // Movimiento hacia adelante y hacia atr�s
+        if (state[SDL_SCANCODE_W]) {
+            cameraPos += cameraSpeed * cameraFront;
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos += 2 * cameraSpeed * cameraFront;
+            }
+        }
+        if (state[SDL_SCANCODE_S]) {
+            cameraPos -= cameraSpeed * cameraFront;
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos -= 2 * cameraSpeed * cameraFront;
+            }
+        }
+
+        // Movimiento lateral (izquierda y derecha)
+        if (state[SDL_SCANCODE_A]) {
+            cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos -= 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            }
+        }
+        if (state[SDL_SCANCODE_D]) {
+            cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            if (state[SDL_SCANCODE_LSHIFT])
+            {
+                cameraPos += 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            }
+        }
+
+        //Zoom
+        if (state[SDL_SCANCODE_Q]) { //Añadir zoom
+                fov -= 1.0f;
+        }
+        else if (state[SDL_SCANCODE_E]) { //Quitar zoom
+            fov += 1.0f;
+        }
+        if (fov < 1.0f)
+            fov = 1.0f;
+        if (fov > 45.0f)
+            fov = 45.0f;
+
+        //Actualiza la perspectiva con el nuevo FOV
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
+        glMatrixMode(GL_MODELVIEW);
+    }
+    else if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT))
+    {
+        if (!isLeftButtonPressed) {
+            isLeftButtonPressed = true;
+        }
+        if (state[SDL_SCANCODE_LALT]) { //Añadir zoom
+            if (rotation == false)
+            {
+                rotation = true;
+			}
+            else
+            {
+                rotation = false;
+            }
+        }
     }
     else {
-        isMiddleButtonPressed = false;
+		isLeftButtonPressed = false;
+        isRightButtonPressed = false;
     }
+
+    //Centrar mirada al objeto
+    if (state[SDL_SCANCODE_F]) {
+        //Actualizamos la direcci�n de la c�mara
+        cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
+		yaw = initialyaw;
+		pitch = initialpitch;
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+    }
+
+    if (rotation == true) {
+        camera_angle += 0.005f;
+        if (camera_angle > 2.0f * 3.14159265f) camera_angle = 0.0f;
+        cameraPos.x = sin(camera_angle) * camera_radius;
+        cameraPos.z = cos(camera_angle) * camera_radius;
+        cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+    }
+
 }
-
-void updateZoom() {
-    const Uint8* state = SDL_GetKeyboardState(NULL);
-    
-    if (state[SDL_SCANCODE_Q]) { //Scroll hacia arriba
-        fov -= 1.0f;
-    }
-    else if (state[SDL_SCANCODE_E]) { //Scroll hacia abajo
-        fov += 1.0f;
-    }
-
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
-
-    //Actualiza la perspectiva con el nuevo FOV
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
-    glMatrixMode(GL_MODELVIEW);
-}
-
 static bool processEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -308,9 +355,7 @@ int main(int argc, char** argv) {
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
 
-        processInput();
-        updateCameraDirection();
-        updateZoom();
+        updateCamera();
         display_func(textureID);
         window.swapBuffers();
         const auto t1 = hrclock::now();
