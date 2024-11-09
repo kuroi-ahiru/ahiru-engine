@@ -1,4 +1,3 @@
-// Component.h
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
@@ -6,21 +5,17 @@ class GameObject;
 
 class Component {
 public:
-    enum class Type { Transform, Mesh, Material, Light, Script };
+    enum class Type { Mesh };
 
-    Component(Type type, GameObject* owner);
+    Component(Type type, GameObject* owner) : type(type), owner(owner) {}
     virtual ~Component() = default;
 
-    virtual void Enable();
-    virtual void Update();
-    virtual void Disable();
-    bool IsActive() const;
+    virtual void Update() = 0;
+    virtual void Render() = 0;
 
 protected:
-    GameObject* owner;
     Type type;
-    bool active;
+    GameObject* owner;
 };
 
 #endif // COMPONENT_H
-#pragma once

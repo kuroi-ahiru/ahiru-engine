@@ -9,6 +9,9 @@
 #include <GL/glu.h> // para la perspectiva de glu
 #include <glm/gtc/matrix_transform.hpp> // A�adir esta l�nea para incluir glm::lookAt
 
+#include "GameObject.h"
+#include "ComponentMesh.h"
+
 #include <stdio.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
@@ -22,7 +25,7 @@ using ivec2 = glm::ivec2;
 using vec2 = glm::vec2;
 using vec3 = glm::vec3;
 
-static const ivec2 WINDOW_SIZE(1200, 600); //1300 800
+static const ivec2 WINDOW_SIZE(1200, 600); //1300 800 para poder trabajr en el portatil luego se cambia
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -55,9 +58,9 @@ bool rotation = false;
 int grid_size = 30;
 float grid_spacing = 1.5f;
 
-static std::vector<vec3> vertices;
-static std::vector<vec2> texCoords;
-static std::vector<unsigned int> indices;
+//static std::vector<vec3> vertices; //Comento pq lo he puesto en funcion gameobject pero lo dejo por si al final lo cambio
+//static std::vector<vec2> texCoords;
+//static std::vector<unsigned int> indices;
 
 static void init_openGL() {
     glewInit();
@@ -71,22 +74,60 @@ static void init_openGL() {
     glMatrixMode(GL_MODELVIEW);
 }
 
-static void loadModel(const char* file) {
+//static void loadModel(const char* file) {
+//
+//    const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
+//    if (!scene) {
+//        fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
+//        return;
+//    }
+//    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
+//
+//    vertices.clear();
+//    texCoords.clear();
+//    indices.clear();
+//
+//    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+//        aiMesh* mesh = scene->mMeshes[i];
+//        printf("\nMalla %u:\n", i);
+//
+//        for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//            aiVector3D vertex = mesh->mVertices[v];
+//            vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+//        }
+//
+//        if (mesh->HasTextureCoords(0)) {
+//            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//                aiVector3D uv = mesh->mTextureCoords[0][v];
+//                texCoords.emplace_back(fmodf(uv.x, 1.0f), fmodf(uv.y, 1.0f));
+//            }
+//        }
+//        else {
+//            for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+//                texCoords.emplace_back(0.0f, 0.0f);
+//            }
+//        }
+//
+//        for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
+//            aiFace face = mesh->mFaces[f];
+//            for (unsigned int j = 0; j < face.mNumIndices; j++) {
+//                indices.push_back(face.mIndices[j]);
+//            }
+//        }
+//    }
+//
+//    aiReleaseImport(scene);
+//}   
 
-    const struct aiScene* scene = aiImportFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
+bool loadModel(const char* modelFile, std::vector<vec3>& vertices, std::vector<vec2>& texCoords, std::vector<unsigned int>& indices) {
+    const aiScene* scene = aiImportFile(modelFile, aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene) {
         fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
-        return;
+        return false;
     }
-    printf("N�mero de mallas: %u\n", scene->mNumMeshes);
-
-    vertices.clear();
-    texCoords.clear();
-    indices.clear();
 
     for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[i];
-        printf("\nMalla %u:\n", i);
 
         for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
             aiVector3D vertex = mesh->mVertices[v];
@@ -114,9 +155,38 @@ static void loadModel(const char* file) {
     }
 
     aiReleaseImport(scene);
-}   
+    return true;
+}
 
-GLuint LoadTexture(const char* file) {
+//GLuint LoadTexture(const char* file) {
+//    ILuint imageID;
+//    ilGenImages(1, &imageID);
+//    ilBindImage(imageID);
+//
+//    if (ilLoad(IL_TYPE_UNKNOWN, (wchar_t*)file)) {
+//        ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+//        printf("Cargada textura correctamente \n");
+//    }
+//    else {
+//        fprintf(stderr, "Error al cargar la textura.\n");
+//    }
+//
+//    GLuint textureID;
+//    glGenTextures(1, &textureID);
+//    glBindTexture(GL_TEXTURE_2D, textureID);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ilGetInteger(IL_IMAGE_WIDTH),
+//        ilGetInteger(IL_IMAGE_HEIGHT), 0, GL_RGBA,
+//        GL_UNSIGNED_BYTE, ilGetData());
+//
+//    ilDeleteImages(1, &imageID);
+//    return textureID;
+//}
+
+GLuint loadTexture(const char* file) {
     ILuint imageID;
     ilGenImages(1, &imageID);
     ilBindImage(imageID);
@@ -127,6 +197,8 @@ GLuint LoadTexture(const char* file) {
     }
     else {
         fprintf(stderr, "Error al cargar la textura.\n");
+        ilDeleteImages(1, &imageID);
+        return 0; // Devuelve 0 si falla la carga
     }
 
     GLuint textureID;
@@ -142,6 +214,30 @@ GLuint LoadTexture(const char* file) {
 
     ilDeleteImages(1, &imageID);
     return textureID;
+}
+
+// Create GameObject desde modelo y textura
+std::shared_ptr<GameObject> createGameObject(const char* modelFile, const char* textureFile) {
+    std::vector<vec3> vertices;
+    std::vector<vec2> texCoords;
+    std::vector<unsigned int> indices;
+
+    if (!loadModel(modelFile, vertices, texCoords, indices)) {
+        fprintf(stderr, "No se pudo cargar el modelo: %s\n", modelFile);
+        return nullptr;
+    }
+        
+    GLuint textureID = loadTexture(textureFile);
+    if (textureID == 0) {
+        fprintf(stderr, "No se pudo cargar la textura: %s\n", textureFile);
+        return nullptr;
+    }
+        
+    auto gameObject = std::make_shared<GameObject>(modelFile);
+    auto meshComponent = std::make_shared<ComponentMesh>(gameObject.get(), vertices, texCoords, indices, textureID);
+    gameObject->AddComponent(meshComponent);
+
+    return gameObject;
 }
 
 static void draw_grid() {
@@ -164,32 +260,32 @@ static void draw_grid() {
     glPopAttrib();
 }
 
-static void display_func(GLuint textureID) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glLoadIdentity();
-
-    // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
-    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
-        cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
-        cameraUp.x, cameraUp.y, cameraUp.z);
-    draw_grid();
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glBegin(GL_TRIANGLES);
-    for (unsigned int i = 0; i < indices.size(); i++) {
-        const vec3& vertex = vertices[indices[i]];
-        const vec2& uv = texCoords[indices[i]];
-        glTexCoord2f(uv.x, uv.y);
-        glVertex3f(vertex.x, vertex.y, vertex.z);
-    }
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-}
+//static void display_func(GLuint textureID) {
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//    glLoadIdentity();
+//
+//    // Posicionar la cámara en altura (aérea) y rotando alrededor del origen
+//    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+//        cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
+//        cameraUp.x, cameraUp.y, cameraUp.z);
+//    draw_grid();
+//
+//    glEnable(GL_TEXTURE_2D);
+//    glBindTexture(GL_TEXTURE_2D, textureID);
+//
+//    glEnable(GL_TEXTURE_2D);
+//    glBindTexture(GL_TEXTURE_2D, textureID);
+//    glBegin(GL_TRIANGLES);
+//    for (unsigned int i = 0; i < indices.size(); i++) {
+//        const vec3& vertex = vertices[indices[i]];
+//        const vec2& uv = texCoords[indices[i]];
+//        glTexCoord2f(uv.x, uv.y);
+//        glVertex3f(vertex.x, vertex.y, vertex.z);
+//    }
+//    glEnd();
+//    glDisable(GL_TEXTURE_2D);
+//}
 
 void updateCamera() {
     const float sensitivity = 0.1f;
@@ -348,18 +444,34 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
-    GLuint textureID = LoadTexture("Baker_house.png");
-    loadModel("BakerHouse.fbx");
+    // Cargar modelo bakerhouse por defecto como GameObjects, pending to check
+    std::vector<std::shared_ptr<GameObject>> gameObjects;
+    gameObjects.push_back(createGameObject("BakerHouse.fbx", "Baker_house.png"));
 
     while (window.processEvents() && window.isOpen()) {
         const auto t0 = hrclock::now();
 
         updateCamera();
-        display_func(textureID);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
+            cameraPos.x + cameraFront.x, cameraPos.y + cameraFront.y, cameraPos.z + cameraFront.z,
+            cameraUp.x, cameraUp.y, cameraUp.z);
+
+        draw_grid();
+
+        // Renderizar todos los GameObjects
+        for (auto& gameObject : gameObjects) {
+            if (gameObject) {
+                gameObject->Render();
+            }
+        }
+
         window.swapBuffers();
         const auto t1 = hrclock::now();
         const auto dt = t1 - t0;
-        if (dt < FRAME_DT) this_thread::sleep_for(FRAME_DT - dt);
+        if (dt < FRAME_DT) std::this_thread::sleep_for(FRAME_DT - dt);
     }
 
     return 0;
