@@ -119,14 +119,15 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         }
         ImGui::EndMainMenuBar();
     }
+    // Ajuste de estilo para hacer el DockSpace completamente transparente
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);  // Fondo del DockSpace transparente
 
-    // Crear un dockspace flotante dentro de su propio espacio
-    ImGui::SetNextWindowPos(ImVec2(0, menuHeight), ImGuiCond_Once);
-    ImGui::SetNextWindowSize(ImVec2(300, ImGui::GetIO().DisplaySize.y - menuHeight), ImGuiCond_Once);
-    ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+    ImGui::SetNextWindowPos(ImVec2(0, menuHeight)); 
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));  
+    ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
 
-    // Crear el espacio de docking solo dentro de esta ventana espec�fica
-    ImGui::DockSpace(ImGui::GetID("MainDockSpace"), ImVec2(0, 0), ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
     ImGui::End();
 
     if (show_performance) {
