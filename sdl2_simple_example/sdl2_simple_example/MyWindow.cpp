@@ -158,17 +158,15 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
     if (ImGui::Begin("Inspector")) {
         ImGui::Text("GameObjects in Scene");
-
-        // Iterar a través de los GameObjects en la escena y mostrar nombres
+                
         int index = 0;
         for (const auto& gameObject : scene.GetGameObjects()) {
             std::string label = "Object " + std::to_string(index++) + ": " + gameObject->GetName();
             if (ImGui::Selectable(label.c_str(), gameObject == scene.GetSelectedGameObject())) {
-                scene.SetSelectedGameObject(gameObject);  // Actualizar el objeto seleccionado en la escena
+                scene.SetSelectedGameObject(gameObject);
             }
         }
-
-        // Muestra los detalles del GameObject seleccionado
+                
         if (selectedObject) {
             ImGui::Text("Selected GameObject: %s", selectedObject->GetName().c_str());
 
