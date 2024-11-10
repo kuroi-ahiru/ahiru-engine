@@ -10,6 +10,12 @@
 - [@martagnarta](https://www.github.com/martagnarta)
 - [@apb8](https://www.github.com/apb8)
 
+## Camera Controls
+- WASD for direction
+- Shift for faster movement
+- QE for Zoom
+- Left Click + L Alt to Rotate
+- Camera view with Right Click
 
 ## Features
 
