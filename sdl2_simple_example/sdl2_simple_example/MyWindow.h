@@ -5,6 +5,7 @@
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
 #include "GameObject.h"
+#include "Scene.h"
 
 
 class IEventProcessor {
@@ -42,6 +43,6 @@ public:
 
 	bool processEvents(IEventProcessor* event_processor = nullptr);
 	void swapBuffers() const;
-	void display_func(std::shared_ptr<GameObject> selectedObject);
+	void display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene);
 	std::string getDroppedFile();
 };

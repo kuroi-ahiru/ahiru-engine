@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
         // Obtener el GameObject actualmente seleccionado de la escena
         std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
 
-        window.display_func(currentSelectedObject);
+        window.display_func(currentSelectedObject, scene);
         // DESCOMENTAR ESTA LINEA PARA TOQUETEAR IMGUI Y TAL
         window.swapBuffers();
 
