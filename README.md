@@ -15,11 +15,12 @@ Ahiru Engine is a game engine developed as part of the Bachelor’s Degree in Vi
 - Main Menu with several options: Github repo, engine info ("About"), Quit option
 
 ## 📸 Camera Controls
-- WASD for direction
+- Right Mouse to rotate the camera
+- W, A, S, D + Right Mouse to move the camera
+- Q to Zoom in
+- E to Zoom out
+- F to center view a GameObject
 - Shift for faster movement
-- QE for Zoom
-- Left Click + L Alt to Rotate
-- Camera view with Right Click
 
 ## 👩‍👩‍👦 Authors
 - [Nicolás Sort Sauquillo 🍆💦](https://github.com/nsortsauquillo)
