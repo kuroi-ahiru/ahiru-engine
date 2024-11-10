@@ -2,6 +2,9 @@
 
 #include <memory>
 #include <string>
+#include <streambuf>
+#include <vector>
+#include <iostream>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
 #include "GameObject.h"
@@ -11,6 +14,27 @@
 class IEventProcessor {
 public:
 	virtual void processEvent(const SDL_Event& event) = 0;
+};
+
+class ConsoleBuffer : public std::streambuf {
+public:
+	ConsoleBuffer(std::vector<std::string>& log) : log(log) {}
+
+protected:
+	virtual int overflow(int c) override {
+		if (c == '\n') {
+			log.push_back(current_line);
+			current_line.clear();
+		}
+		else {
+			current_line += static_cast<char>(c);
+		}
+		return c;
+	}
+
+private:
+	std::vector<std::string>& log;
+	std::string current_line;
 };
 
 class MyWindow {
@@ -44,5 +68,11 @@ public:
 	bool processEvents(IEventProcessor* event_processor = nullptr);
 	void swapBuffers() const;
 	void display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene);
+	void logMessage(const std::string& message);
 	std::string getDroppedFile();
+
+private:
+	std::vector<std::string> console_log;
+	ConsoleBuffer console_buffer{ console_log };
+	std::streambuf* original_cout_buffer = nullptr;
 };
