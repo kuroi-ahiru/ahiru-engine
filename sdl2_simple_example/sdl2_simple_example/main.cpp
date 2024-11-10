@@ -24,10 +24,7 @@ using namespace std;
 using hrclock = chrono::high_resolution_clock;
 using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
-using vec2 = glm::vec2;
-using vec3 = glm::vec3;
-
-static const ivec2 WINDOW_SIZE(1200, 600); //1300 800 para poder trabajr en el portatil luego se cambia
+static const ivec2 WINDOW_SIZE(1300, 800); //1300 800 para poder trabajr en el portatil luego se cambia
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -56,10 +53,6 @@ int lastMouseX, lastMouseY;
 float fov = 45.0f;
 bool rotation = false;
 
-// parametros para el grid
-int grid_size = 30;
-float grid_spacing = 1.5f;
-
 static void init_openGL() {
     glewInit();
     if (!GLEW_VERSION_3_0) throw exception("OpenGL 3.0 API is not available.");
@@ -71,30 +64,6 @@ static void init_openGL() {
     gluPerspective(45.0, (double)WINDOW_SIZE.x / WINDOW_SIZE.y, 0.1, 100.0);
     glMatrixMode(GL_MODELVIEW);
 }  
-
-// Create GameObject desde modelo y textura
-//std::shared_ptr<GameObject> createGameObject(const char* modelFile, const char* textureFile) {
-//    std::vector<vec3> vertices;
-//    std::vector<vec2> texCoords;
-//    std::vector<unsigned int> indices;
-//
-//    if (!loadModel(modelFile, vertices, texCoords, indices)) {
-//        fprintf(stderr, "No se pudo cargar el modelo: %s\n", modelFile);
-//        return nullptr;
-//    }
-//        
-//    GLuint textureID = loadTexture(textureFile);
-//    if (textureID == 0) {
-//        fprintf(stderr, "No se pudo cargar la textura: %s\n", textureFile);
-//        return nullptr;
-//    }
-//        
-//    auto gameObject = std::make_shared<GameObject>(modelFile);
-//    auto meshComponent = std::make_shared<ComponentMesh>(gameObject.get(), vertices, texCoords, indices, textureID);
-//    gameObject->AddComponent(meshComponent);
-//
-//    return gameObject;
-//}
 
 void updateCamera() {
     const float sensitivity = 0.1f;

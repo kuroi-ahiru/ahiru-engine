@@ -153,6 +153,8 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
     }
 
     if (ImGui::Begin("Inspector")) {
+        ImGui::Text("Inspector");
+        ImGui::Separator();
         if (selectedObject) {
             ImGui::Text("GameObject: %s", selectedObject->GetName().c_str());
 
@@ -203,8 +205,18 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
         else {
             ImGui::Text("No GameObject selected");
         }
+        ImGui::End();
     }
-    ImGui::End();
+    if (ImGui::Begin("Hierarchy)")) {
+        ImGui::Text("Hierarchy");
+        ImGui::Separator();
+        /*for (auto& gameObject : gameObjects) {
+            if (ImGui::Selectable(gameObject->GetName().c_str(), gameObject == selectedObject)) {
+                selectedObject = gameObject;
+            }
+        }*/
+        ImGui::End();
+    }
 
     if (show_about) {
         ImGui::OpenPopup("About");
