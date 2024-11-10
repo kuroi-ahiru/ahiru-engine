@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <chrono>
 #include <thread>
+#include <memory> // Para std::shared_ptr
 #include <exception>
 #include <glm/glm.hpp>
 #include "MyWindow.h"
@@ -259,13 +260,16 @@ int main(int argc, char** argv) {
             cameraUp.x, cameraUp.y, cameraUp.z);
 
         scene.DrawGrid();
-        scene.Update();
-        scene.Render();
-
+        
         // Actualizar y renderizar la escena completa
         scene.Update();
         scene.Render();
-        //window.display_func(); DESCOMENTAR ESTA LINEA PARA TOQUETEAR IMGUI Y TAL
+
+        // Obtener el GameObject actualmente seleccionado de la escena
+        std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
+
+        window.display_func(currentSelectedObject);
+        // DESCOMENTAR ESTA LINEA PARA TOQUETEAR IMGUI Y TAL
         window.swapBuffers();
 
         std::string droppedFile = window.getDroppedFile();

@@ -27,6 +27,7 @@ public:
     const std::string& GetFilePath() const { return filePath; }
 
     // Activar o desactivar la textura de "checkers"
+    bool IsUsingCheckers() const { return useCheckers; }
     void SetUseCheckers(bool enable) { useCheckers = enable; }
 
     // Método para cargar una textura de "checkers" (patrón de cuadros)

@@ -33,6 +33,11 @@ public:
     bool IsActive() const { return active; }
     const std::string& GetName() const { return name; }
 
+    //referencia const a la lista de componentes
+    const std::vector<std::shared_ptr<Component>>& GetComponents() const {
+        return components;
+    }
+
 private:
     std::string name;
     bool active;

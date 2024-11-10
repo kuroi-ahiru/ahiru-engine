@@ -1,12 +1,18 @@
+#include <GL/glew.h> //pongo aquyi para test error
 #include <exception>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_opengl.h>
+#include <memory>               // Para std::shared_ptr
 #include "MyWindow.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include "SDL2/SDL.h"
+#include "ComponentMesh.h"
+#include "ComponentTransform.h"
+#include "ComponentTexture.h"
+//#include "Scene.h" //nose si hace falta revisar includes
 #include <cstdlib>
 #include <windows.h>
 #include <psapi.h>
@@ -14,6 +20,7 @@
 #include "imgui_internal.h"
 #include <cmath>
 #include <algorithm>
+
 using namespace std;
 
 ImGuiIO* g_io = nullptr;
@@ -83,7 +90,7 @@ void MyWindow::swapBuffers() const {
 }
 
 
-void MyWindow::display_func() {
+void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
@@ -144,6 +151,60 @@ void MyWindow::display_func() {
 
         ImGui::End();
     }
+
+    if (ImGui::Begin("Inspector")) {
+        if (selectedObject) {
+            ImGui::Text("GameObject: %s", selectedObject->GetName().c_str());
+
+            for (auto& component : selectedObject->GetComponents()) {
+                switch (component->GetType()) {
+                case Component::Type::Transform: {
+                    auto* transform = dynamic_cast<ComponentTransform*>(component.get());
+                    if (transform) {
+                        ImGui::Separator();
+                        ImGui::Text("Transform Component");
+                        ImGui::Text("Position: (%.2f, %.2f, %.2f)", transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z);
+                        ImGui::Text("Rotation: (%.2f, %.2f, %.2f)", transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z);
+                        ImGui::Text("Scale: (%.2f, %.2f, %.2f)", transform->GetScale().x, transform->GetScale().y, transform->GetScale().z);
+                    }
+                    break;
+                }
+                case Component::Type::Mesh: {
+                    auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
+                    if (mesh) {
+                        ImGui::Separator();
+                        ImGui::Text("Mesh Component");
+                        bool showNormals = mesh->IsShowNormalsEnabled();
+                        if (ImGui::Checkbox("Show Normals", &showNormals)) {
+                            mesh->SetShowNormals(showNormals);
+                        }
+                    }
+                    break;
+                }
+                case Component::Type::Texture: {
+                    auto* texture = dynamic_cast<ComponentTexture*>(component.get());
+                    if (texture) {
+                        ImGui::Separator();
+                        ImGui::Text("Texture Component");
+                        ImGui::Text("Size: %dx%d", texture->GetWidth(), texture->GetHeight());
+                        ImGui::Text("Path: %s", texture->GetFilePath().c_str());
+                        bool useCheckers = texture->IsUsingCheckers();
+                        if (ImGui::Checkbox("Use Checker Texture", &useCheckers)) {
+                            texture->SetUseCheckers(useCheckers);
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+        }
+        else {
+            ImGui::Text("No GameObject selected");
+        }
+    }
+    ImGui::End();
 
     if (show_about) {
         ImGui::OpenPopup("About");

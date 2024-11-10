@@ -26,9 +26,9 @@ public:
     void SetScale(const glm::vec3& newScale) { scale = newScale; }
 
 private:
-    glm::vec3 position;  // Posición del GameObject
-    glm::vec3 rotation;  // Rotación en grados (x, y, z)
-    glm::vec3 scale;     // Escala en cada eje
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
 };
 
 #endif // COMPONENTTRANSFORM_H

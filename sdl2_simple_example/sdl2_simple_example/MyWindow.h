@@ -1,8 +1,10 @@
 #pragma once
 
+#include <memory>
+#include <string>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
-#include <string>
+#include "GameObject.h"
 
 
 class IEventProcessor {
@@ -40,6 +42,6 @@ public:
 
 	bool processEvents(IEventProcessor* event_processor = nullptr);
 	void swapBuffers() const;
-	void display_func();
+	void display_func(std::shared_ptr<GameObject> selectedObject);
 	std::string getDroppedFile();
 };
