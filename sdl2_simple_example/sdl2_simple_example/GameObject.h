@@ -8,7 +8,7 @@
 
 class GameObject {
 public:
-    GameObject(const std::string& name) : name(name), active(true) {} // Definición en línea del constructor, revisar si mejor separar en h y cpp
+    GameObject(const std::string& name) : name(name), active(true) {}
     ~GameObject() = default;
 
     void AddComponent(std::shared_ptr<Component> component) {

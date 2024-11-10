@@ -13,7 +13,7 @@ public:
     void Update() override {}
     void Render() override {
         if (useCheckers) {
-            // Código para aplicar la textura en "checkers"
+        
             glBindTexture(GL_TEXTURE_2D, checkerTextureID);
         }
         else {
@@ -21,20 +21,18 @@ public:
         }
     }
 
-    // Info para el inspector
     int GetWidth() const { return width; }
     int GetHeight() const { return height; }
     const std::string& GetFilePath() const { return filePath; }
 
-    // Activar o desactivar la textura de "checkers"
     bool IsUsingCheckers() const { return useCheckers; }
     void SetUseCheckers(bool enable) { useCheckers = enable; }
 
-    // Método para cargar una textura de "checkers" (patrón de cuadros)
+    // intento para cargar textura de los cuadritos del workshop de clase
     void LoadCheckerTexture() {
         glGenTextures(1, &checkerTextureID);
         glBindTexture(GL_TEXTURE_2D, checkerTextureID);
-        unsigned char checkerData[64 * 64 * 3];  // Patrón 8x8 de 64x64 píxeles
+        unsigned char checkerData[64 * 64 * 3];  
 
         for (int y = 0; y < 64; y++) {
             for (int x = 0; x < 64; x++) {
@@ -52,11 +50,11 @@ public:
     }
 
 private:
-    GLuint textureID;            // ID de la textura principal
-    GLuint checkerTextureID;     // ID de la textura de cuadros (checkers)
-    int width, height;           // Dimensiones de la textura
-    std::string filePath;        // Camino de la textura
-    bool useCheckers;            // Bandera para activar o desactivar "checkers"
+    GLuint textureID;          
+    GLuint checkerTextureID;   
+    int width, height;         
+    std::string filePath;      
+    bool useCheckers;          
 };
 
 #endif // COMPONENTTEXTURE_H

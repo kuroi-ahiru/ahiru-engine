@@ -24,7 +24,7 @@ using namespace std;
 using hrclock = chrono::high_resolution_clock;
 using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
-static const ivec2 WINDOW_SIZE(1300, 800); //1300 800 para poder trabajr en el portatil luego se cambia
+static const ivec2 WINDOW_SIZE(1600, 900); //1300 800 para poder trabajr en el portatil luego se cambia
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -51,9 +51,11 @@ bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
+bool houseLoaded = false;
 bool rotation = false;
 
 static void init_openGL() {
+
     glewInit();
     if (!GLEW_VERSION_3_0) throw exception("OpenGL 3.0 API is not available.");
     glEnable(GL_DEPTH_TEST);
@@ -66,9 +68,10 @@ static void init_openGL() {
 }  
 
 void updateCamera() {
-    const float sensitivity = 0.1f;
 
+    const float sensitivity = 0.1f;
     const float cameraSpeed = 0.05f;
+
     const Uint8* state = SDL_GetKeyboardState(NULL);
 
     int mouseX, mouseY;
@@ -76,6 +79,7 @@ void updateCamera() {
     Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
     if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+
         if (!isRightButtonPressed) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
@@ -107,14 +111,15 @@ void updateCamera() {
         cameraFront = glm::normalize(newcameraDirection);
 
         if (state[SDL_SCANCODE_W]) {
-            cameraPos += cameraSpeed * cameraFront;
-            if (state[SDL_SCANCODE_LSHIFT])
-            {
-                cameraPos += 2 * cameraSpeed * cameraFront;
 
+            cameraPos += cameraSpeed * cameraFront;
+            if (state[SDL_SCANCODE_LSHIFT]) {
+
+                cameraPos += 2 * cameraSpeed * cameraFront;
             }
         }
         if (state[SDL_SCANCODE_S]) {
+
             cameraPos -= cameraSpeed * cameraFront;
             if (state[SDL_SCANCODE_LSHIFT])
             {
@@ -123,14 +128,18 @@ void updateCamera() {
         }
 
         if (state[SDL_SCANCODE_A]) {
+
             cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+
             if (state[SDL_SCANCODE_LSHIFT])
             {
                 cameraPos -= 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
             }
         }
         if (state[SDL_SCANCODE_D]) {
+
             cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+
             if (state[SDL_SCANCODE_LSHIFT])
             {
                 cameraPos += 2 * cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
@@ -157,9 +166,11 @@ void updateCamera() {
     else if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT))
     {
         if (!isLeftButtonPressed) {
+
             isLeftButtonPressed = true;
         }
         if (state[SDL_SCANCODE_LALT]) {
+
             if (rotation == false)
             {
                 std::cout << "Camera rotation enabled" << std::endl;
@@ -173,6 +184,7 @@ void updateCamera() {
         }
     }
     else {
+
 		isLeftButtonPressed = false;
         isRightButtonPressed = false;
     }
@@ -214,18 +226,18 @@ static bool processEvents() {
 }
 
 int main(int argc, char** argv) {
+
     MyWindow window("Ahiru Engine", WINDOW_SIZE.x, WINDOW_SIZE.y);
+    Scene scene;
+
     ilInit();
     init_openGL();
 
-    Scene scene;
-
     while (window.processEvents() && window.isOpen()) {
+
         const auto t0 = hrclock::now();
 
-        updateCamera();
-
-        // pongo aqui lo de la camara pq me he cargado la display funcion
+        updateCamera(); // pongo aqui lo de la camara pq me he cargado la display funcion. vale lesia
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
@@ -233,25 +245,30 @@ int main(int argc, char** argv) {
             cameraUp.x, cameraUp.y, cameraUp.z);
 
         scene.DrawGrid();
-        
-        // Actualizar y renderizar la escena completa
         scene.Update();
         scene.Render();
 
-        // Obtener el GameObject actualmente seleccionado de la escena
         std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
 
         window.display_func(currentSelectedObject, scene);
-        // DESCOMENTAR ESTA LINEA PARA TOQUETEAR IMGUI Y TAL
         window.swapBuffers();
 
+        // Carga automatica de la casica esa con la textura al arrancar el motor
+        if (!houseLoaded)
+        {
+            auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
+            scene.AddGameObject(bakerHouse);
+			houseLoaded = true;
+        }
+
+        // DRAG AND DROP + crear GameObject del objeto dropeado
         std::string droppedFile = window.getDroppedFile();
         if (!droppedFile.empty() && droppedFile.find(".fbx") != std::string::npos) {
 
-            auto bakerHouse = scene.CreateGameObject(droppedFile.c_str(), "Baker_house.png");
+            auto dropped = scene.CreateGameObject(droppedFile.c_str(), "Baker_house.png");
 
-            if (bakerHouse) {
-                scene.AddGameObject(bakerHouse);
+            if (dropped != NULL) {
+                scene.AddGameObject(dropped);
             }
         }
 

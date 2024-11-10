@@ -20,7 +20,6 @@ public:
     std::shared_ptr<GameObject> CreateGameObject(const char* modelFile, const char* textureFile);
 
     const std::vector<std::shared_ptr<GameObject>>& GetGameObjects() const { return gameObjects; }
-    // Métodos para gestionar el GameObject seleccionado
     std::shared_ptr<GameObject> GetSelectedGameObject() const { return selectedGameObject; }
     void SetSelectedGameObject(std::shared_ptr<GameObject> gameObject) { selectedGameObject = gameObject; }
 

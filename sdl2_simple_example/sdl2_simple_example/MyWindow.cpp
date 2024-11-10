@@ -32,23 +32,23 @@ float fps = 0.0f;
 static std::vector<std::string> console_log;
 static char console_input[256] = "";
 
-Scene scene;
-
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
+
     open(title, width, height);
     original_cout_buffer = std::cout.rdbuf(&console_buffer);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
 
     g_io = &ImGui::GetIO();
-    g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable keyboard 
-    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable docking
+    g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Añadir en el json docking-experimental
  
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
 MyWindow::~MyWindow() {
+
     if (original_cout_buffer) {
         std::cout.rdbuf(original_cout_buffer);
     }
@@ -62,6 +62,7 @@ MyWindow::~MyWindow() {
 }
 
 void MyWindow::open(const char* title, unsigned short width, unsigned short height) {
+
     if (isOpen()) return;
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -78,6 +79,7 @@ void MyWindow::open(const char* title, unsigned short width, unsigned short heig
 }
 
 void MyWindow::close() {
+
     if (!isOpen()) return;
 
     SDL_GL_DeleteContext(_ctx);
@@ -88,33 +90,35 @@ void MyWindow::close() {
 }
 
 size_t getMemoryUsage() {
+
     PROCESS_MEMORY_COUNTERS pmc;
     if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+
         return pmc.PagefileUsage / 1024; //bytes a KB
     }
     return 0;
 }
 
 void MyWindow::swapBuffers() const {
+
     SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
 }
 
 
 void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene) {
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
     static bool show_about = false;
     static bool show_performance = false;
-    static bool show_console = false;
     float menuHeight = 0.0f;
 
     if (ImGui::BeginMainMenuBar()) {
-        menuHeight = ImGui::GetWindowSize().y; 
-        if (ImGui::MenuItem("Console")) {
-            show_console = !show_console;
-        }
+
+        menuHeight = ImGui::GetWindowSize().y;
+
         if (ImGui::MenuItem("Performance")) {
             show_performance = !show_performance;
         }
@@ -131,18 +135,19 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         }
         ImGui::EndMainMenuBar();
     }
-    // Ajuste de estilo para hacer el DockSpace completamente transparente
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);  // Fondo del DockSpace transparente
 
-    ImGui::SetNextWindowPos(ImVec2(0, menuHeight)); 
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));  
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f); // Provisional para que se pueda ver la escena debajo de los menus de IMGUI
+
+    ImGui::SetNextWindowPos(ImVec2(0, menuHeight));
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));
     ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
 
     ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
     ImGui::End();
 
     if (show_performance) {
+
         ImGui::Begin("Performance", &show_performance, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
         currentTime = SDL_GetTicks();
@@ -153,7 +158,6 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         size_t memory_mb = getMemoryUsage() / 1024;
         ImGui::Text("Memory Usage: %zu MB", memory_mb);
 
-        //los fps son fake porq se quedan perma a 0
         static float fps_history[100] = {};
         static int fps_index = 0;
         fps_history[fps_index] = fps;
@@ -171,48 +175,56 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     }
 
     if (ImGui::Begin("Inspector")) {
+
         ImGui::Text("Inspector");
         ImGui::Separator();
-        ImGui::Text("GameObjects in Scene");
-                
-        int index = 0;
-        for (const auto& gameObject : scene.GetGameObjects()) {
-            std::string label = "Object " + std::to_string(index++) + ": " + gameObject->GetName();
-            if (ImGui::Selectable(label.c_str(), gameObject == scene.GetSelectedGameObject())) {
-                scene.SetSelectedGameObject(gameObject);
-            }
-        }
-                
+           
         if (selectedObject) {
+
             ImGui::Text("Selected GameObject: %s", selectedObject->GetName().c_str());
 
             for (auto& component : selectedObject->GetComponents()) {
+
                 switch (component->GetType()) {
-                case Component::Type::Transform: {
-                    auto* transform = dynamic_cast<ComponentTransform*>(component.get());
-                    if (transform) {
-                        ImGui::Separator();
-                        ImGui::Text("Transform Component");
-                        ImGui::Text("Position: (%.2f, %.2f, %.2f)", transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z);
-                        ImGui::Text("Rotation: (%.2f, %.2f, %.2f)", transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z);
-                        ImGui::Text("Scale: (%.2f, %.2f, %.2f)", transform->GetScale().x, transform->GetScale().y, transform->GetScale().z);
-                    }
-                    break;
-                }
-                case Component::Type::Mesh: {
-                    auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
-                    if (mesh) {
-                        ImGui::Separator();
-                        ImGui::Text("Mesh Component");
-                        bool showNormals = mesh->IsShowNormalsEnabled();
-                        if (ImGui::Checkbox("Show Normals", &showNormals)) {
-                            mesh->SetShowNormals(showNormals);
+
+                    case Component::Type::Transform: {
+
+                        auto* transform = dynamic_cast<ComponentTransform*>(component.get());
+                        if (transform) {
+
+                            ImGui::Separator();
+                            ImGui::Text("Transform Component");
+                            ImGui::Text("Position: (%.2f, %.2f, %.2f)", transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z);
+                            ImGui::Text("Rotation: (%.2f, %.2f, %.2f)", transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z);
+                            ImGui::Text("Scale: (%.2f, %.2f, %.2f)", transform->GetScale().x, transform->GetScale().y, transform->GetScale().z);
                         }
-                    }
-                    break;
+                        break;
                 }
+                    case Component::Type::Mesh: {
+                        auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
+
+                        if (mesh) {
+                            ImGui::Separator();
+                            ImGui::Text("Mesh Component");
+
+							// Tick apra mostrar u ocultar el modelo
+                            bool isVisible = mesh->IsVisible();
+                            if (ImGui::Checkbox("Set Active", &isVisible)) {
+                                mesh->SetVisible(isVisible);  // Actualiza el estado de visibilidad
+                            }
+
+                            // Tick para las normales
+                            bool showNormals = mesh->IsShowNormalsEnabled();
+                            if (ImGui::Checkbox("Show Normals", &showNormals)) {
+                                mesh->SetShowNormals(showNormals);
+                            }
+                        }
+                        break;
+                    }
                 case Component::Type::Texture: {
+
                     auto* texture = dynamic_cast<ComponentTexture*>(component.get());
+
                     if (texture) {
                         ImGui::Separator();
                         ImGui::Text("Texture Component");
@@ -231,48 +243,67 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
             }
         }
         else {
+
             ImGui::Text("No GameObject selected");
         }
         ImGui::End();
     }
     if (ImGui::Begin("Hierarchy)")) {
+
         ImGui::Text("Hierarchy");
         ImGui::Separator();
-        /*for (auto& gameObject : gameObjects) {
-            if (ImGui::Selectable(gameObject->GetName().c_str(), gameObject == selectedObject)) {
-                selectedObject = gameObject;
-            }
-        }*/
+        ImGui::Text("GameObjects in Scene");
 
-    if (show_console) {
-        ImGui::Begin("Console", &show_console, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+        int index = 0;
+        for (const auto& gameObject : scene.GetGameObjects()) {
+
+            std::string label = "GameObject " + std::to_string(index++);
+
+            if (ImGui::Selectable(label.c_str(), gameObject == scene.GetSelectedGameObject())) {
+                scene.SetSelectedGameObject(gameObject);
+            }
+        }
+        ImGui::End();
+    }
+    if  (ImGui::Begin("Console")) {
+
+        ImGui::Text("Console");
+        ImGui::Separator();
 
         for (const auto& line : console_log) {
+
             ImGui::TextUnformatted(line.c_str());
         }
 
         if (ImGui::InputText("##ConsoleInput", console_input, IM_ARRAYSIZE(console_input), ImGuiInputTextFlags_EnterReturnsTrue)) {
+
             console_log.push_back(std::string("> ") + console_input);
 
             if (std::string(console_input) == "clear") {
+
                 console_log.clear();
             }
             else if (std::string(console_input) == "fps") {
+
                 console_log.push_back("Current FPS: " + std::to_string(fps));
             }
             else if (std::string(console_input) == "memory") {
+
                 console_log.push_back("Memory usage: " + std::to_string(getMemoryUsage() / 1024) + " MB");
             }
             else if (std::string(console_input) == "help") {
+
                 console_log.push_back("Commands:\n   - fps: Show the current fps\n   - memory: Shows the memory usage\n   - quit: Close the engine");
                 console_log.push_back("Controls:\n   - Right click + WASD: Moves the camera\n   - Right click + Q or E: ZoomIn or ZoomOut\n   - F: Centers the camera\n   - Left click + Left Alt: Rotates the camera");
             }
             else if (std::string(console_input) == "quit") {
+
                 SDL_Event quit_event;
                 quit_event.type = SDL_QUIT;
                 SDL_PushEvent(&quit_event);
             }
             else {
+
                 console_log.push_back("Unrecognized command: " + std::string(console_input));
             }
 
@@ -280,6 +311,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         }
 
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+
             ImGui::SetScrollHereY(1.0f);
         }
 
@@ -287,50 +319,59 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     }
 
     if (show_about) {
+
         ImGui::OpenPopup("About");
         show_about = false;
     }
 
     if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
         ImGui::Text("Ahiru Engine: \n");
         ImGui::Text("Version: 0.1.0");
         ImGui::Text("Developer: Kuroi Ahiru");
         ImGui::Text("Libraries Used: SDL2, OpenGL, ImGui, Devil, Assimp");
         ImGui::Separator();
+
         if (ImGui::Button("OK", ImVec2(120, 0))) {
+
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
     }
 
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
 bool MyWindow::processEvents(IEventProcessor* event_processor) {
+
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+
         ImGui_ImplSDL2_ProcessEvent(&e);
         if (event_processor) event_processor->processEvent(e);
 
         switch (e.type) {
-        case SDL_QUIT:
-            close();
-            return false;
 
-        case SDL_DROPFILE: {
-            char* file = e.drop.file;
-            droppedFile = file; // Almacena el archivo soltado en droppedFile
-            SDL_free(file);     // Libera la memoria
-            break;
-        }
+            case SDL_QUIT:
+                close();
+                return false;
+
+            case SDL_DROPFILE: {
+
+                char* file = e.drop.file;
+                droppedFile = file; // gurda el archivo soltado en droppedFile
+                SDL_free(file);     
+                break;
+            }
         }
     }
     return true;
 }
 
 std::string MyWindow::getDroppedFile() {
+
     std::string file = droppedFile;
     droppedFile.clear();
     return file;
