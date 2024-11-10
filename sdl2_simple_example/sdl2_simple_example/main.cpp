@@ -111,6 +111,7 @@ void updateCamera() {
             if (state[SDL_SCANCODE_LSHIFT])
             {
                 cameraPos += 2 * cameraSpeed * cameraFront;
+
             }
         }
         if (state[SDL_SCANCODE_S]) {
@@ -158,13 +159,15 @@ void updateCamera() {
         if (!isLeftButtonPressed) {
             isLeftButtonPressed = true;
         }
-        if (state[SDL_SCANCODE_LALT]) { //Añadir zoom
+        if (state[SDL_SCANCODE_LALT]) {
             if (rotation == false)
             {
+                std::cout << "Camera rotation enabled" << std::endl;
                 rotation = true;
 			}
             else
             {
+                std::cout << "Camera rotation stopped" << std::endl;
                 rotation = false;
             }
         }
@@ -176,6 +179,7 @@ void updateCamera() {
 
     //Centrar mirada al objeto
     if (state[SDL_SCANCODE_F]) {
+        std::cout << "Camera centered" << std::endl;
         cameraFront = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
 		yaw = initialyaw;
 		pitch = initialpitch;

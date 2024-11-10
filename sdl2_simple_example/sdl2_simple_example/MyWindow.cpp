@@ -20,6 +20,7 @@
 #include "imgui_internal.h"
 #include <cmath>
 #include <algorithm>
+#include <streambuf>
 
 using namespace std;
 
@@ -28,11 +29,14 @@ ImGuiIO* g_io = nullptr;
 Uint32 lastTime = 0;
 Uint32 currentTime;
 float fps = 0.0f;
+static std::vector<std::string> console_log;
+static char console_input[256] = "";
 
 Scene scene;
 
-MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
+MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
     open(title, width, height);
+    original_cout_buffer = std::cout.rdbuf(&console_buffer);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
 
@@ -45,6 +49,10 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
 }
 
 MyWindow::~MyWindow() {
+    if (original_cout_buffer) {
+        std::cout.rdbuf(original_cout_buffer);
+    }
+
     ImGui_ImplSDL2_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui::DestroyContext();
@@ -99,10 +107,14 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
     static bool show_about = false;
     static bool show_performance = false;
+    static bool show_console = false;
     float menuHeight = 0.0f;
 
     if (ImGui::BeginMainMenuBar()) {
         menuHeight = ImGui::GetWindowSize().y; 
+        if (ImGui::MenuItem("Console")) {
+            show_console = !show_console;
+        }
         if (ImGui::MenuItem("Performance")) {
             show_performance = !show_performance;
         }
@@ -141,6 +153,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         size_t memory_mb = getMemoryUsage() / 1024;
         ImGui::Text("Memory Usage: %zu MB", memory_mb);
 
+        //los fps son fake porq se quedan perma a 0
         static float fps_history[100] = {};
         static int fps_index = 0;
         fps_history[fps_index] = fps;
@@ -230,6 +243,46 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
                 selectedObject = gameObject;
             }
         }*/
+
+    if (show_console) {
+        ImGui::Begin("Console", &show_console, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+
+        for (const auto& line : console_log) {
+            ImGui::TextUnformatted(line.c_str());
+        }
+
+        if (ImGui::InputText("##ConsoleInput", console_input, IM_ARRAYSIZE(console_input), ImGuiInputTextFlags_EnterReturnsTrue)) {
+            console_log.push_back(std::string("> ") + console_input);
+
+            if (std::string(console_input) == "clear") {
+                console_log.clear();
+            }
+            else if (std::string(console_input) == "fps") {
+                console_log.push_back("Current FPS: " + std::to_string(fps));
+            }
+            else if (std::string(console_input) == "memory") {
+                console_log.push_back("Memory usage: " + std::to_string(getMemoryUsage() / 1024) + " MB");
+            }
+            else if (std::string(console_input) == "help") {
+                console_log.push_back("Commands:\n   - fps: Show the current fps\n   - memory: Shows the memory usage\n   - quit: Close the engine");
+                console_log.push_back("Controls:\n   - Right click + WASD: Moves the camera\n   - Right click + Q or E: ZoomIn or ZoomOut\n   - F: Centers the camera\n   - Left click + Left Alt: Rotates the camera");
+            }
+            else if (std::string(console_input) == "quit") {
+                SDL_Event quit_event;
+                quit_event.type = SDL_QUIT;
+                SDL_PushEvent(&quit_event);
+            }
+            else {
+                console_log.push_back("Unrecognized command: " + std::string(console_input));
+            }
+
+            strcpy_s(console_input, "");
+        }
+
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+            ImGui::SetScrollHereY(1.0f);
+        }
+
         ImGui::End();
     }
 
