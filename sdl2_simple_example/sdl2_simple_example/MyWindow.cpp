@@ -252,6 +252,10 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
             else if (std::string(console_input) == "memory") {
                 console_log.push_back("Memory usage: " + std::to_string(getMemoryUsage() / 1024) + " MB");
             }
+            else if (std::string(console_input) == "help") {
+                console_log.push_back("Commands:\n   - fps: Show the current fps\n   - memory: Shows the memory usage\n   - quit: Close the engine");
+                console_log.push_back("Controls:\n   - Right click + WASD: Moves the camera\n   - Right click + Q or E: ZoomIn or ZoomOut\n   - F: Centers the camera\n   - Left click + Left Alt: Rotates the camera");
+            }
             else if (std::string(console_input) == "quit") {
                 SDL_Event quit_event;
                 quit_event.type = SDL_QUIT;
