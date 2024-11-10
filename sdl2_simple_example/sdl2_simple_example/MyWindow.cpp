@@ -12,7 +12,7 @@
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
 #include "ComponentTexture.h"
-//#include "Scene.h" //nose si hace falta revisar includes
+#include "Scene.h" //nose si hace falta revisar includes
 #include <cstdlib>
 #include <windows.h>
 #include <psapi.h>
@@ -28,6 +28,8 @@ ImGuiIO* g_io = nullptr;
 Uint32 lastTime = 0;
 Uint32 currentTime;
 float fps = 0.0f;
+
+Scene scene;
 
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) {
     open(title, width, height);
@@ -90,7 +92,7 @@ void MyWindow::swapBuffers() const {
 }
 
 
-void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
+void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
@@ -118,11 +120,13 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::SetNextWindowPos(ImVec2(0, menuHeight)); 
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));  
-    ImGui::Begin("DockSpace Demo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
+    // Crear un dockspace flotante dentro de su propio espacio
+    ImGui::SetNextWindowPos(ImVec2(0, menuHeight), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(300, ImGui::GetIO().DisplaySize.y - menuHeight), ImGuiCond_Once);
+    ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-    ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
+    // Crear el espacio de docking solo dentro de esta ventana específica
+    ImGui::DockSpace(ImGui::GetID("MainDockSpace"), ImVec2(0, 0), ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::End();
 
     if (show_performance) {
@@ -153,8 +157,20 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject) {
     }
 
     if (ImGui::Begin("Inspector")) {
+        ImGui::Text("GameObjects in Scene");
+
+        // Iterar a través de los GameObjects en la escena y mostrar nombres
+        int index = 0;
+        for (const auto& gameObject : scene.GetGameObjects()) {
+            std::string label = "Object " + std::to_string(index++) + ": " + gameObject->GetName();
+            if (ImGui::Selectable(label.c_str(), gameObject == scene.GetSelectedGameObject())) {
+                scene.SetSelectedGameObject(gameObject);  // Actualizar el objeto seleccionado en la escena
+            }
+        }
+
+        // Muestra los detalles del GameObject seleccionado
         if (selectedObject) {
-            ImGui::Text("GameObject: %s", selectedObject->GetName().c_str());
+            ImGui::Text("Selected GameObject: %s", selectedObject->GetName().c_str());
 
             for (auto& component : selectedObject->GetComponents()) {
                 switch (component->GetType()) {
