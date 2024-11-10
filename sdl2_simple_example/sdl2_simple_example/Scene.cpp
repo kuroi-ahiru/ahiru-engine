@@ -6,6 +6,8 @@
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "ComponentMesh.h"
+#include "ComponentTransform.h"
+#include "ComponentTexture.h"
 
 Scene::Scene() {
     ilInit(); // Inicializa DevIL para manejo de texturas
@@ -123,6 +125,12 @@ std::shared_ptr<GameObject> Scene::CreateGameObject(const char* modelFile, const
     auto gameObject = std::make_shared<GameObject>(modelFile);
     auto meshComponent = std::make_shared<ComponentMesh>(gameObject.get(), vertices, texCoords, indices, textureID);
     gameObject->AddComponent(meshComponent);
+
+    auto transformComponent = std::make_shared<ComponentTransform>(gameObject.get());
+    gameObject->AddComponent(transformComponent);
+
+    auto textureComponent = std::make_shared<ComponentTexture>(gameObject.get(), textureID, ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT), textureFile);
+    gameObject->AddComponent(textureComponent);
 
     return gameObject;
 }
