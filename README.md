@@ -7,19 +7,6 @@ Ahiru Engine is a game engine developed as part of the Bachelor’s Degree in Vi
 ## Ahiru Engine v0.1.0 Released! 
 - [View the release on GitHub](https://github.com/kuroi-ahiru/ahiru-engine/releases/tag/alpha)
 
-## 👩‍👩‍👦 Authors
-
-- [@nsortsauquillo](https://www.github.com/nsortsauquillo)
-- [@martagnarta](https://www.github.com/martagnarta)
-- [@apb8](https://www.github.com/apb8)
-
-## 📸 Camera Controls
-- WASD for direction
-- Shift for faster movement
-- QE for Zoom
-- Left Click + L Alt to Rotate
-- Camera view with Right Click
-
 ## 🦆 Features
 
 - Drag & Drop FBX 3D Models
@@ -28,3 +15,16 @@ Ahiru Engine is a game engine developed as part of the Bachelor’s Degree in Vi
 - Model Component's info: Transform, Texture and Mesh
 - Other Engine's info: FPS, memory consumption, software versions
 - Main Menu with several options: Github repo, engine info ("About"), Quit option
+
+## 📸 Camera Controls
+- WASD for direction
+- Shift for faster movement
+- QE for Zoom
+- Left Click + L Alt to Rotate
+- Camera view with Right Click
+
+## 👩‍👩‍👦 Authors
+
+- [@nsortsauquillo](https://www.github.com/nsortsauquillo)
+- [@martagnarta](https://www.github.com/martagnarta)
+- [@apb8](https://www.github.com/apb8)
