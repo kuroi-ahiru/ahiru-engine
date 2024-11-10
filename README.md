@@ -1,23 +1,26 @@
-# Ahiru Game Engine
+# Ahiru Game Engine 🥡
 
-1st delivery of the Ahiru Game Engine for our Game Engine's project.
+Ahiru Engine is a game engine developed as part of the Bachelor’s Degree in Video Game Design and Development at CITM UPC in Terrassa. This initial release demonstrates the core functionality of the engine and highlights ongoing work and known issues being addressed by the development team.
 
 - [Ahiru Engine](https://github.com/kuroi-ahiru/ahiru-engine)
 
-## Authors
+## Ahiru Engine v0.1.0 Released! 
+- [View the release on GitHub](https://github.com/kuroi-ahiru/ahiru-engine/releases/tag/alpha)
+
+## 👩‍👩‍👦 Authors
 
 - [@nsortsauquillo](https://www.github.com/nsortsauquillo)
 - [@martagnarta](https://www.github.com/martagnarta)
 - [@apb8](https://www.github.com/apb8)
 
-## Camera Controls
+## 📸 Camera Controls
 - WASD for direction
 - Shift for faster movement
 - QE for Zoom
 - Left Click + L Alt to Rotate
 - Camera view with Right Click
 
-## Features
+## 🦆 Features
 
 - Drag & Drop FBX 3D Models
 - Camera Controls
