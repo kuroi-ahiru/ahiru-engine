@@ -112,6 +112,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     ImGui::NewFrame();
 
     static bool show_about = false;
+    static bool show_help = false;
     static bool show_performance = false;
     float menuHeight = 0.0f;
 
@@ -132,6 +133,12 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
             SDL_PushEvent(&quit_event);
+        }
+        if (ImGui::MenuItem("Open ImGui Help")) {
+            show_help = true;
+        } 
+        if (ImGui::MenuItem("Close ImGui Help")) {
+            show_help = false;
         }
         ImGui::EndMainMenuBar();
     }
@@ -174,6 +181,11 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         ImGui::End();
     }
 
+    if (show_help)
+    {
+        ImGui::ShowDemoWindow();
+    }
+
     if (ImGui::Begin("Inspector")) {
 
         ImGui::Text("Inspector");
@@ -191,12 +203,15 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                         auto* transform = dynamic_cast<ComponentTransform*>(component.get());
                         if (transform) {
+                            static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
+                            static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
+                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };
 
                             ImGui::Separator();
                             ImGui::Text("Transform Component");
-                            ImGui::Text("Position: (%.2f, %.2f, %.2f)", transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z);
-                            ImGui::Text("Rotation: (%.2f, %.2f, %.2f)", transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z);
-                            ImGui::Text("Scale: (%.2f, %.2f, %.2f)", transform->GetScale().x, transform->GetScale().y, transform->GetScale().z);
+                            ImGui::InputFloat3("Position: ", position);
+                            ImGui::InputFloat3("Rotation: ", rotation);
+                            ImGui::InputFloat3("Scale: ", scale);
                         }
                         break;
                 }

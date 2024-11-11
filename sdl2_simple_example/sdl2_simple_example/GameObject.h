@@ -41,6 +41,7 @@ public:
 private:
     std::string name;
     bool active;
+    bool isStatic;
     std::vector<std::shared_ptr<Component>> components;
 };
 
