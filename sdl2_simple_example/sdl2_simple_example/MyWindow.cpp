@@ -203,18 +203,23 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                         auto* transform = dynamic_cast<ComponentTransform*>(component.get());
                         if (transform) {
+
                             static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
                             static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
                             static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };
 
                             ImGui::Separator();
                             ImGui::Text("Transform Component");
-                            ImGui::InputFloat3("Position: ", position);
+                            if (ImGui::InputFloat3("Position: ", position)) {
+                                // Actualizar posición si ha cambiado
+                                transform->SetPosition(glm::vec3(position[0], position[1], position[2]));
+                            }
+
                             ImGui::InputFloat3("Rotation: ", rotation);
                             ImGui::InputFloat3("Scale: ", scale);
                         }
                         break;
-                }
+                    }
                     case Component::Type::Mesh: {
                         auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
 
