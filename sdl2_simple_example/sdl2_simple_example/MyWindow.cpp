@@ -35,6 +35,7 @@ static char console_input[256] = "";
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
 
     open(title, width, height);
+    setIcon("patonegro.bmp");
     original_cout_buffer = std::cout.rdbuf(&console_buffer);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
@@ -375,4 +376,15 @@ std::string MyWindow::getDroppedFile() {
     std::string file = droppedFile;
     droppedFile.clear();
     return file;
+}
+
+void MyWindow::setIcon(const char* iconPath) {
+    SDL_Surface* icon = SDL_LoadBMP("patonegro.bmp");
+    if (!icon) {
+        std::cerr << "Error loading icon BMP: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    SDL_SetWindowIcon(_window, icon);
+    SDL_FreeSurface(icon);
 }

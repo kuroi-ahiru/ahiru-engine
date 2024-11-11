@@ -24,7 +24,7 @@ using namespace std;
 using hrclock = chrono::high_resolution_clock;
 using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
-static const ivec2 WINDOW_SIZE(1600, 900); //1300 800 para poder trabajr en el portatil luego se cambia
+static const ivec2 WINDOW_SIZE(1200, 600); //1300 800 para poder trabajr en el portatil luego se cambia
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -224,6 +224,7 @@ static bool processEvents() {
     }
     return true;
 }
+
 
 int main(int argc, char** argv) {
 
