@@ -130,17 +130,17 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::MenuItem("About")) {
             show_about = true;
         }
+        if (ImGui::MenuItem("Open ImGui Help")) {
+            show_help = true;
+        }
+        if (ImGui::MenuItem("Close ImGui Help")) {
+            show_help = false;
+        }
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
             SDL_PushEvent(&quit_event);
-        }
-        if (ImGui::MenuItem("Open ImGui Help")) {
-            show_help = true;
-        } 
-        if (ImGui::MenuItem("Close ImGui Help")) {
-            show_help = false;
-        }
+        }        
         ImGui::EndMainMenuBar();
     }
 
