@@ -210,13 +210,15 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                             ImGui::Separator();
                             ImGui::Text("Transform Component");
-                            if (ImGui::InputFloat3("Position: ", position)) {
+                            ImGui::Text("Position:");
+                            if (ImGui::InputFloat3("", position)) {
                                 // Actualizar posición si ha cambiado
                                 transform->SetPosition(glm::vec3(position[0], position[1], position[2]));
                             }
-
-                            ImGui::InputFloat3("Rotation: ", rotation);
-                            ImGui::InputFloat3("Scale: ", scale);
+                            ImGui::Text("Rotation:");
+                            ImGui::InputFloat3("", rotation);
+                            ImGui::Text("Scale:");
+                            ImGui::InputFloat3("", scale);
                         }
                         break;
                     }
