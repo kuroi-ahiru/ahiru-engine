@@ -5,6 +5,9 @@
 #include <vector>
 #include <memory>
 #include "Component.h"
+#include <glm/gtc/type_ptr.hpp> //para el render
+
+class ComponentTransform; //declaracion anticipada ?? para los errores pero luego me lo miro
 
 class GameObject {
 public:
@@ -24,9 +27,35 @@ public:
     }
 
     void Render() {
+        /*for (auto& component : components) {
+            if (component) component->Render();
+        }*/
+
+        if (!active) return;
+
+        glm::mat4 transform = glm::mat4(1.0f);
+
+        // Buscar el componente de transformación
+        for (auto& component : components) {
+            if (component && component->GetType() == Component::Type::Transform) {
+                auto* transformComponent = dynamic_cast<ComponentTransform*>(component.get());
+                if (transformComponent) {
+                    transform = transformComponent->GetTransformMatrix();
+                    break;
+                }
+            }
+        }
+
+        // Aplicar la transformación en OpenGL
+        glPushMatrix();
+        glMultMatrixf(glm::value_ptr(transform));
+
+        // Renderizar todos los componentes
         for (auto& component : components) {
             if (component) component->Render();
         }
+
+        glPopMatrix(); // Restaurar la matriz
     }
 
     void SetActive(bool active) { this->active = active; }
