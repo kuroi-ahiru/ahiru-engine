@@ -71,8 +71,12 @@ public:
 	void logMessage(const std::string& message);
 	std::string getDroppedFile();
 
+    void LoadIcons(Scene &scene);
+	bool IsPaused() const { return isPaused; }
+
 private:
 	std::vector<std::string> console_log;
 	ConsoleBuffer console_buffer{ console_log };
 	std::streambuf* original_cout_buffer = nullptr;
+	bool isPaused = false;
 };
