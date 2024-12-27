@@ -234,6 +234,24 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
+    // Carga auto escena "Street Environment"
+    bool sceneLoaded = false;
+
+    if (!sceneLoaded) {
+        auto streetEnvironment = scene.CreateGameObject(
+            "Street environment_V01.FBX", // Modelo
+            "Building_V02_C.png"          // Textura principal
+        );
+
+        if (streetEnvironment) {
+            scene.AddGameObject(streetEnvironment);
+            sceneLoaded = true;
+        }
+        else {
+            std::cerr << "Error: No se pudo cargar la escena 'Street Environment'." << std::endl;
+        }
+    }
+
     while (window.processEvents() && window.isOpen()) {
 
         const auto t0 = hrclock::now();
@@ -248,11 +266,6 @@ int main(int argc, char** argv) {
         scene.DrawGrid();
         scene.Update();
         scene.Render();
-
-        std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
-
-        window.display_func(currentSelectedObject, scene);
-        window.swapBuffers();
 
         // Carga automatica de la casica esa con la textura al arrancar el motor
         if (!houseLoaded)
@@ -272,6 +285,11 @@ int main(int argc, char** argv) {
                 scene.AddGameObject(dropped);
             }
         }
+
+        std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
+
+        window.display_func(currentSelectedObject, scene);
+        window.swapBuffers();
 
         const auto t1 = hrclock::now();
         const auto dt = t1 - t0;

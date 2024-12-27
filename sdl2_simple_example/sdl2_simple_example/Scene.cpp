@@ -44,57 +44,67 @@ void Scene::Update() {
     }
 }
 
-bool Scene::LoadModel(const char* modelFile, std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& texCoords, std::vector<unsigned int>& indices) {
-
+bool Scene::LoadModel(const char* modelFile,
+    std::vector<glm::vec3>& vertices,
+    std::vector<glm::vec2>& texCoords,
+    std::vector<unsigned int>& indices,
+    std::vector<GLuint>& textureIDs) {
     const aiScene* scene = aiImportFile(modelFile, aiProcess_Triangulate | aiProcess_FlipUVs);
 
     if (!scene) {
-
         fprintf(stderr, "Error al cargar el archivo: %s\n", aiGetErrorString());
         return false;
     }
 
     for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-
         aiMesh* mesh = scene->mMeshes[i];
 
+        // Cargar vértices
         for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-
             aiVector3D vertex = mesh->mVertices[v];
             vertices.emplace_back(vertex.x, vertex.y, vertex.z);
         }
 
+        // Cargar coordenadas de textura (UV)
         if (mesh->HasTextureCoords(0)) {
-
             for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-
                 aiVector3D uv = mesh->mTextureCoords[0][v];
                 texCoords.emplace_back(fmodf(uv.x, 1.0f), fmodf(uv.y, 1.0f));
             }
         }
         else {
-
             for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-
                 texCoords.emplace_back(0.0f, 0.0f);
             }
         }
 
+        // Cargar índices
         for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
-
             aiFace face = mesh->mFaces[f];
-
             for (unsigned int j = 0; j < face.mNumIndices; j++) {
-
                 indices.push_back(face.mIndices[j]);
+            }
+        }
+
+        // Cargar texturas asociadas
+        if (scene->HasMaterials()) {
+            aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+            for (unsigned int t = 0; t < material->GetTextureCount(aiTextureType_DIFFUSE); t++) {
+                aiString path;
+                if (material->GetTexture(aiTextureType_DIFFUSE, t, &path) == AI_SUCCESS) {
+                    GLuint textureID = LoadTexture(path.C_Str());
+                    if (textureID != 0) {
+                        textureIDs.push_back(textureID);
+                    }
+                }
             }
         }
     }
 
     aiReleaseImport(scene);
-
     return true;
 }
+
 
 GLuint Scene::LoadTexture(const char* file) {
 
@@ -127,37 +137,32 @@ GLuint Scene::LoadTexture(const char* file) {
 }
 
 std::shared_ptr<GameObject> Scene::CreateGameObject(const char* modelFile, const char* textureFile) {
-
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
+    std::vector<GLuint> textureIDs;
 
-    if (!LoadModel(modelFile, vertices, texCoords, indices)) {
-
+    if (!LoadModel(modelFile, vertices, texCoords, indices, textureIDs)) {
         fprintf(stderr, "No se pudo cargar el modelo: %s\n", modelFile);
         return nullptr;
     }
 
-    GLuint textureID = LoadTexture(textureFile);
-
-    if (textureID == 0) {
-
-        fprintf(stderr, "No se pudo cargar la textura: %s\n", textureFile);
-        return nullptr;
-    }
-
     auto gameObject = std::make_shared<GameObject>(modelFile);
-    auto meshComponent = std::make_shared<ComponentMesh>(gameObject.get(), vertices, texCoords, indices, textureID);
+    auto meshComponent = std::make_shared<ComponentMesh>(gameObject.get(), vertices, texCoords, indices, textureIDs);
     gameObject->AddComponent(meshComponent);
 
     auto transformComponent = std::make_shared<ComponentTransform>(gameObject.get());
     gameObject->AddComponent(transformComponent);
 
-    auto textureComponent = std::make_shared<ComponentTexture>(gameObject.get(), textureID, ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT), textureFile);
-    gameObject->AddComponent(textureComponent);
+    // Asignar textura principal como componente (opcional)
+    if (!textureIDs.empty()) {
+        auto textureComponent = std::make_shared<ComponentTexture>(gameObject.get(), textureIDs[0], 0, 0, textureFile);
+        gameObject->AddComponent(textureComponent);
+    }
 
     return gameObject;
 }
+
 
 void Scene::DrawGrid(int grid_size, float grid_spacing) {
 

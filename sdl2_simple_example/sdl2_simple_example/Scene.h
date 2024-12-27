@@ -23,7 +23,12 @@ public:
     std::shared_ptr<GameObject> GetSelectedGameObject() const { return selectedGameObject; }
     void SetSelectedGameObject(std::shared_ptr<GameObject> gameObject) { selectedGameObject = gameObject; }
 
-    bool LoadModel(const char* modelFile, std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& texCoords, std::vector<unsigned int>& indices);
+    /*bool LoadModel(const char* modelFile, std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& texCoords, std::vector<unsigned int>& indices);*/
+    bool LoadModel(const char* modelFile,
+        std::vector<glm::vec3>& vertices,
+        std::vector<glm::vec2>& texCoords,
+        std::vector<unsigned int>& indices,
+        std::vector<GLuint>& textureIDs);
     GLuint LoadTexture(const char* textureFile);
     void DrawGrid(int grid_size = 30, float grid_spacing = 1.5f);
 
