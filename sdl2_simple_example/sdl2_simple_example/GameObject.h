@@ -6,6 +6,7 @@
 #include <memory>
 #include "Component.h"
 #include "ComponentTransform.h"
+#include "ComponentMesh.h"
 #include <glm/gtc/type_ptr.hpp> //para el render
 
 
@@ -65,6 +66,43 @@ public:
     const std::vector<std::shared_ptr<Component>>& GetComponents() const {
         return components;
     }
+
+    glm::vec3 GetBoundingBoxMin() const {
+        for (const auto& component : components) {
+            if (component && component->GetType() == Component::Type::Mesh) {
+                auto* meshComponent = dynamic_cast<ComponentMesh*>(component.get());
+                if (meshComponent) {
+                    return meshComponent->GetBoundingBoxMin();
+                }
+            }
+        }
+        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de malla
+    }
+
+    glm::vec3 GetBoundingBoxMax() const {
+        for (const auto& component : components) {
+            if (component && component->GetType() == Component::Type::Mesh) {
+                auto* meshComponent = dynamic_cast<ComponentMesh*>(component.get());
+                if (meshComponent) {
+                    return meshComponent->GetBoundingBoxMax();
+                }
+            }
+        }
+        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de malla
+    }
+
+    glm::vec3 GetPosition() const {
+        for (const auto& component : components) {
+            if (component && component->GetType() == Component::Type::Transform) {
+                auto* transformComponent = dynamic_cast<ComponentTransform*>(component.get());
+                if (transformComponent) {
+                    return transformComponent->GetPosition();
+                }
+            }
+        }
+        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de transformacion
+    }
+
 
 private:
     std::string name;

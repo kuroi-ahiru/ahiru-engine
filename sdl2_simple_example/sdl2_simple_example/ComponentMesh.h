@@ -48,6 +48,22 @@ public:
     bool IsVisible() const { return visible; }
     void SetVisible(bool isVisible) { visible = isVisible; }
 
+    glm::vec3 GetBoundingBoxMin() const {
+        glm::vec3 min(FLT_MAX);
+        for (const auto& vertex : vertices) {
+            min = glm::min(min, vertex);
+        }
+        return min;
+    }
+
+    glm::vec3 GetBoundingBoxMax() const {
+        glm::vec3 max(-FLT_MAX);
+        for (const auto& vertex : vertices) {
+            max = glm::max(max, vertex);
+        }
+        return max;
+    }
+
 private:
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> texCoords;

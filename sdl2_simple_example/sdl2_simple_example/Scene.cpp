@@ -9,6 +9,39 @@
 #include "ComponentTransform.h"
 #include "ComponentTexture.h"
 
+//funcion aux para rayo picking mouse
+static bool RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDir,
+    const glm::vec3& boxMin, const glm::vec3& boxMax) {
+    float tmin = (boxMin.x - rayOrigin.x) / rayDir.x;
+    float tmax = (boxMax.x - rayOrigin.x) / rayDir.x;
+
+    if (tmin > tmax) std::swap(tmin, tmax);
+
+    float tymin = (boxMin.y - rayOrigin.y) / rayDir.y;
+    float tymax = (boxMax.y - rayOrigin.y) / rayDir.y;
+
+    if (tymin > tymax) std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+
+    if (tymin > tmin)
+        tmin = tymin;
+    if (tymax < tmax)
+        tmax = tymax;
+
+    float tzmin = (boxMin.z - rayOrigin.z) / rayDir.z;
+    float tzmax = (boxMax.z - rayOrigin.z) / rayDir.z;
+
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+
+    return true;
+}
+
+
 Scene::Scene() {
     ilInit();
 }
@@ -32,6 +65,23 @@ void Scene::Render() {
         if (gameObject) {
             gameObject->Render();
         }
+    }
+
+    //Debug visual del rayo
+    if (debugMode) {
+        glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
+        glDisable(GL_LIGHTING);
+        glLineWidth(2.0f);
+        glColor3f(1.0f, 0.0f, 0.0f); //Rojo para el rayo
+
+        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 100.0f; //Longitud del rayo (100 unidades)
+
+        glBegin(GL_LINES);
+        glVertex3f(debugRayOrigin.x, debugRayOrigin.y, debugRayOrigin.z);
+        glVertex3f(rayEnd.x, rayEnd.y, rayEnd.z);
+        glEnd();
+
+        glPopAttrib();
     }
 }
 
@@ -181,4 +231,29 @@ void Scene::DrawGrid(int grid_size, float grid_spacing) {
     glEnd();
     glDisable(GL_BLEND);
     glPopAttrib();
+}
+
+std::shared_ptr<GameObject> Scene::PickGameObject(const glm::vec3& rayOrigin, const glm::vec3& rayDir) {
+    debugRayOrigin = rayOrigin; //guardar datos del rayo para debug
+    debugRayDir = rayDir;
+
+    std::shared_ptr<GameObject> closestObject = nullptr;
+    float closestDistance = std::numeric_limits<float>::max();
+
+    for (const auto& gameObject : gameObjects) {
+        // Suponemos que cada GameObject tiene GetBoundingBoxMin() y GetBoundingBoxMax()
+        const glm::vec3 boxMin = gameObject->GetBoundingBoxMin();
+        const glm::vec3 boxMax = gameObject->GetBoundingBoxMax();
+
+        if (RayIntersectsAABB(rayOrigin, rayDir, boxMin, boxMax)) {
+            float distance = glm::distance(rayOrigin, gameObject->GetPosition());
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestObject = gameObject;
+            }
+        }
+    }
+
+    selectedGameObject = closestObject; //actualizamos el seleccionado
+    return closestObject;
 }

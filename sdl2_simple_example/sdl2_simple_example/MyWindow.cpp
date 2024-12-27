@@ -136,6 +136,11 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::MenuItem("Close ImGui Help")) {
             show_help = false;
         }
+        //checkbox debug rayo mouse picking
+        static bool debugRayEnabled = false;
+        if (ImGui::Checkbox("Debug Ray Mode", &debugRayEnabled)) {
+            scene.SetDebugMode(debugRayEnabled); //activar/desactivar modo debug en Scene
+        } 
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
