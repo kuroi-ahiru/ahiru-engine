@@ -71,6 +71,8 @@ public:
 	void logMessage(const std::string& message);
 	std::string getDroppedFile();
 
+	void setIcon(const char* iconPath);
+
 private:
 	std::vector<std::string> console_log;
 	ConsoleBuffer console_buffer{ console_log };

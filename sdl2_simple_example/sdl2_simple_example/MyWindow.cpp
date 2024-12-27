@@ -35,6 +35,7 @@ static char console_input[256] = "";
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
 
     open(title, width, height);
+    setIcon("patonegro.bmp");
     original_cout_buffer = std::cout.rdbuf(&console_buffer);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
@@ -129,17 +130,17 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::MenuItem("About")) {
             show_about = true;
         }
+        if (ImGui::MenuItem("Open ImGui Help")) {
+            show_help = true;
+        }
+        if (ImGui::MenuItem("Close ImGui Help")) {
+            show_help = false;
+        }
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
             SDL_PushEvent(&quit_event);
-        }
-        if (ImGui::MenuItem("Open ImGui Help")) {
-            show_help = true;
-        } 
-        if (ImGui::MenuItem("Close ImGui Help")) {
-            show_help = false;
-        }
+        }        
         ImGui::EndMainMenuBar();
     }
 
@@ -203,15 +204,34 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                         auto* transform = dynamic_cast<ComponentTransform*>(component.get());
                         if (transform) {
-                            static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
+                            /*static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
                             static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
-                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };
+                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };*/
 
                             ImGui::Separator();
                             ImGui::Text("Transform Component");
-                            ImGui::InputFloat3("Position: ", position);
+
+                            /*ImGui::InputFloat3("Position: ", position);
                             ImGui::InputFloat3("Rotation: ", rotation);
-                            ImGui::InputFloat3("Scale: ", scale);
+                            ImGui::InputFloat3("Scale: ", scale);*/
+
+                            // Editable Position
+                            glm::vec3 position = transform->GetPosition();
+                            if (ImGui::InputFloat3("Position", &position[0])) {
+                                transform->SetPosition(position);
+                            }
+
+                            // Editable Rotation
+                            glm::vec3 rotation = transform->GetRotation();
+                            if (ImGui::InputFloat3("Rotation", &rotation[0])) {
+                                transform->SetRotation(rotation);
+                            }
+
+                            // Editable Scale
+                            glm::vec3 scale = transform->GetScale();
+                            if (ImGui::InputFloat3("Scale", &scale[0])) {
+                                transform->SetScale(scale);
+                            }
                         }
                         break;
                 }
@@ -390,4 +410,15 @@ std::string MyWindow::getDroppedFile() {
     std::string file = droppedFile;
     droppedFile.clear();
     return file;
+}
+
+void MyWindow::setIcon(const char* iconPath) {
+    SDL_Surface* icon = SDL_LoadBMP("patonegro.bmp");
+    if (!icon) {
+        std::cerr << "Error loading icon BMP: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    SDL_SetWindowIcon(_window, icon);
+    SDL_FreeSurface(icon);
 }
