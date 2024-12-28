@@ -140,6 +140,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         static bool debugRayEnabled = false;
         if (ImGui::Checkbox("Debug Ray Mode", &debugRayEnabled)) {
             scene.SetDebugMode(debugRayEnabled); //activar/desactivar modo debug en Scene
+            std::cout << "Debug Ray Mode: " << (debugRayEnabled ? "Enabled" : "Disabled") << std::endl; //para comorobar si va
         } 
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;

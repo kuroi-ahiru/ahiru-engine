@@ -5,9 +5,11 @@
 #include <assimp/postprocess.h>
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
 #include "ComponentTexture.h"
+
 
 //funcion aux para rayo picking mouse
 static bool RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDir,
@@ -67,14 +69,19 @@ void Scene::Render() {
         }
     }
 
-    //Debug visual del rayo
+    //Debug visual del rayo, no me va pero lo dejo por si da tiempo a arreglarlo
     if (debugMode) {
+        // depuracion purposes
+        std::cout << "Drawing debug ray..." << std::endl;
+        std::cout << "Ray Origin: (" << debugRayOrigin.x << ", " << debugRayOrigin.y << ", " << debugRayOrigin.z << ")\n";
+        std::cout << "Ray Direction: (" << debugRayDir.x << ", " << debugRayDir.y << ", " << debugRayDir.z << ")\n";
+               
         glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
         glDisable(GL_LIGHTING);
         glLineWidth(2.0f);
-        glColor3f(1.0f, 0.0f, 0.0f); //Rojo para el rayo
+        glColor3f(1.0f, 0.0f, 0.0f); //Rojo
 
-        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 100.0f; //Longitud del rayo (100 unidades)
+        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 1000.0f; //Longitud del rayo (100 unidades)
 
         glBegin(GL_LINES);
         glVertex3f(debugRayOrigin.x, debugRayOrigin.y, debugRayOrigin.z);
