@@ -261,11 +261,11 @@ int main(int argc, char** argv) {
     while (window.processEvents() && window.isOpen()) {
 
         const auto t0 = hrclock::now();
-
-        updateCamera(); // pongo aqui lo de la camara pq me he cargado la display funcion. vale lesia
-
+        if (!window.IsPaused()) {
+            updateCamera();
+            scene.Update();
+        }
         viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);//mousepicking
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
@@ -273,7 +273,6 @@ int main(int argc, char** argv) {
             cameraUp.x, cameraUp.y, cameraUp.z);
 
         scene.DrawGrid();
-        scene.Update();
         scene.Render();
 
         std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
