@@ -66,6 +66,12 @@ void Scene::Render() {
     for (auto& gameObject : gameObjects) {
         if (gameObject) {
             gameObject->Render();
+
+            // debug AABB
+            if (debugMode) {
+                gameObject->CalculateAABB();
+                gameObject->DrawAABB();
+            }
         }
     }
 
