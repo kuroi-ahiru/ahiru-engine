@@ -281,23 +281,50 @@ int main(int argc, char** argv) {
         window.display_func(currentSelectedObject, scene);
         window.swapBuffers();
 
-        // Picking de GameObjects
+        //mouse picking no funciona por el bug q hay con el docking de la ImGui
         if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-            int mouseX, mouseY;
-            SDL_GetMouseState(&mouseX, &mouseY);
+            if (!ImGui::GetIO().WantCaptureMouse) { // asegurarse de que WantCaptureMouse es correcto
+                std::cout << "Mouse picking triggered." << std::endl;
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
 
-            glm::vec3 rayDir = CalculateRay(mouseX, mouseY, WINDOW_SIZE.x, WINDOW_SIZE.y, projectionMatrix, viewMatrix);
-            glm::vec3 rayOrigin = cameraPos; // Usamos la pos de la camara como origen del rayo
+                glm::vec3 rayDir = CalculateRay(mouseX, mouseY, WINDOW_SIZE.x, WINDOW_SIZE.y, projectionMatrix, viewMatrix);
+                glm::vec3 rayOrigin = cameraPos;
 
-            auto selectedObject = scene.PickGameObject(rayOrigin, rayDir);
+                auto selectedObject = scene.PickGameObject(rayOrigin, rayDir);
 
-            if (selectedObject) {
-                printf("GameObject seleccionado: %s\n", selectedObject->GetName().c_str());
+                if (selectedObject) {
+                    printf("GameObject seleccionado: %s\n", selectedObject->GetName().c_str());
+                }
+                else {
+                    printf("No se seleccionó ningún GameObject\n");
+                }
             }
             else {
-                printf("No se seleccionó ningún GameObject\n");
+                std::cout << "Mouse interaction blocked by ImGui.\n";
             }
         }
+
+
+        //Dejo esta funcion de game object picking funcional sin tener el cuenta el bug de la ImGui no borrar porfis
+        
+        //// Picking de GameObjects
+        //if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+        //    int mouseX, mouseY;
+        //    SDL_GetMouseState(&mouseX, &mouseY);
+
+        //    glm::vec3 rayDir = CalculateRay(mouseX, mouseY, WINDOW_SIZE.x, WINDOW_SIZE.y, projectionMatrix, viewMatrix);
+        //    glm::vec3 rayOrigin = cameraPos; // Usamos la pos de la camara como origen del rayo
+
+        //    auto selectedObject = scene.PickGameObject(rayOrigin, rayDir);
+
+        //    if (selectedObject) {
+        //        printf("GameObject seleccionado: %s\n", selectedObject->GetName().c_str());
+        //    }
+        //    else {
+        //        printf("No se seleccionó ningún GameObject\n");
+        //    }
+        //}
 
 
         // Carga automatica de la casica esa con la textura al arrancar el motor
