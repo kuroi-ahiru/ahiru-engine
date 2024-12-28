@@ -4,104 +4,33 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <glm/gtc/type_ptr.hpp> //para el render
 #include "Component.h"
 #include "ComponentTransform.h"
 #include "ComponentMesh.h"
-#include <glm/gtc/type_ptr.hpp> //para el render
 
 
 class GameObject {
 public:
-    GameObject(const std::string& name) : name(name), active(true) {}
-    ~GameObject() = default;
+    GameObject(const std::string& name);
+    ~GameObject();
 
-    void AddComponent(std::shared_ptr<Component> component) {
-        components.push_back(component);
-    }
+    void AddComponent(std::shared_ptr<Component> component);
 
-    void Update() {
-        if (active) {
-            for (auto& component : components) {
-                if (component) component->Update();
-            }
-        }
-    }
+    void Update();
 
-    void Render() {
-        /*for (auto& component : components) {
-            if (component) component->Render();
-        }*/
+    void Render();
 
-        if (!active) return;
-
-        glm::mat4 transform = glm::mat4(1.0f);
-
-        // buscar el componente de transformacion
-        for (auto& component : components) {
-            if (component && component->GetType() == Component::Type::Transform) {
-                auto* transformComponent = dynamic_cast<ComponentTransform*>(component.get());
-                if (transformComponent) {
-                    transform = transformComponent->GetTransformMatrix();
-                    break;
-                }
-            }
-        }
-
-        // aplicar transformacion en OpenGL
-        glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-                
-        for (auto& component : components) {
-            if (component) component->Render();
-        }
-
-        glPopMatrix();
-    }
-
-    void SetActive(bool active) { this->active = active; }
-    bool IsActive() const { return active; }
-    const std::string& GetName() const { return name; }
+    void SetActive(bool active);
+    bool IsActive() const;
+    const std::string& GetName() const;
 
     //referencia const a la lista de componentes
-    const std::vector<std::shared_ptr<Component>>& GetComponents() const {
-        return components;
-    }
+    const std::vector<std::shared_ptr<Component>>& GetComponents() const;
 
-    glm::vec3 GetBoundingBoxMin() const {
-        for (const auto& component : components) {
-            if (component && component->GetType() == Component::Type::Mesh) {
-                auto* meshComponent = dynamic_cast<ComponentMesh*>(component.get());
-                if (meshComponent) {
-                    return meshComponent->GetBoundingBoxMin();
-                }
-            }
-        }
-        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de malla
-    }
-
-    glm::vec3 GetBoundingBoxMax() const {
-        for (const auto& component : components) {
-            if (component && component->GetType() == Component::Type::Mesh) {
-                auto* meshComponent = dynamic_cast<ComponentMesh*>(component.get());
-                if (meshComponent) {
-                    return meshComponent->GetBoundingBoxMax();
-                }
-            }
-        }
-        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de malla
-    }
-
-    glm::vec3 GetPosition() const {
-        for (const auto& component : components) {
-            if (component && component->GetType() == Component::Type::Transform) {
-                auto* transformComponent = dynamic_cast<ComponentTransform*>(component.get());
-                if (transformComponent) {
-                    return transformComponent->GetPosition();
-                }
-            }
-        }
-        return glm::vec3(0.0f); // Valor por defecto si no hay un componente de transformacion
-    }
+    glm::vec3 GetBoundingBoxMin() const;
+    glm::vec3 GetBoundingBoxMax() const;
+    glm::vec3 GetPosition() const;
 
 
 private:
