@@ -5,6 +5,7 @@
 #include <exception>
 #include <glm/glm.hpp>
 #include "MyWindow.h"
+#include "Importer.h"
 #include "imgui_impl_sdl2.h"
 #include <IL/il.h>
 #include <GL/glu.h> // para la perspectiva de glu
@@ -70,6 +71,7 @@ int lastMouseX, lastMouseY;
 float fov = 45.0f;
 bool houseLoaded = false;
 bool rotation = false;
+std::unique_ptr<Importer> importer;
 
 glm::mat4 projectionMatrix;
 glm::mat4 viewMatrix;
@@ -258,6 +260,8 @@ int main(int argc, char** argv) {
 
     projectionMatrix = glm::perspective(glm::radians(fov), (float)WINDOW_SIZE.x / (float)WINDOW_SIZE.y, 0.1f, 100.0f); //mousepicking
 
+    importer = std::make_unique<Importer>();
+
     while (window.processEvents() && window.isOpen()) {
 
         const auto t0 = hrclock::now();
@@ -303,25 +307,42 @@ int main(int argc, char** argv) {
         // Carga automatica de la casica esa con la textura al arrancar el motor
         if (!houseLoaded)
         {
-            auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
-            scene.AddGameObject(bakerHouse);
-			houseLoaded = true;
+            std::string modelPath = "BakerHouse.fbx";
+            std::string texturePath = "Baker_house.png";
+        
+        GLuint textureID;
+        int width, height;
+        if (importer->ImportTexture(texturePath, textureID, width, height)) {
+            if (importer->ImportFBX(modelPath)) {
+                auto bakerHouse = scene.CreateGameObject(modelPath.c_str(), texturePath.c_str());
+                // Add components using imported data
+                scene.AddGameObject(bakerHouse);
+                houseLoaded = true;
+        }
+    }
         }
 
         // DRAG AND DROP + crear GameObject del objeto dropeado
         std::string droppedFile = window.getDroppedFile();
-        if (!droppedFile.empty() && droppedFile.find(".fbx") != std::string::npos) {
-
-            auto dropped = scene.CreateGameObject(droppedFile.c_str(), "Baker_house.png");
-
-            if (dropped != NULL) {
-                scene.AddGameObject(dropped);
+        if (!droppedFile.empty()) {
+            if (droppedFile.find(".fbx") != std::string::npos) {
+                if (importer->ImportFBX(droppedFile)) {
+                    auto dropped = scene.CreateGameObject(std::filesystem::path(droppedFile).filename().string().c_str(), "Baker_house.png");
+                    if (dropped != nullptr) {
+                        scene.AddGameObject(dropped);
+                    }
+                }
+            } else if (droppedFile.find(".png") != std::string::npos || 
+                    droppedFile.find(".jpg") != std::string::npos) {
+                GLuint textureID;
+                int width, height;
+                if (importer->ImportTexture(droppedFile, textureID, width, height)) {
+                    // Handle texture assignment to selected object
+                    if (auto selected = scene.GetSelectedGameObject()) {
+                        // Update texture of selected object
+                    }
+                }
             }
-        }
-
-        const auto t1 = hrclock::now();
-        const auto dt = t1 - t0;
-        if (dt < FRAME_DT) std::this_thread::sleep_for(FRAME_DT - dt);
     }
 
     return 0;

@@ -42,7 +42,7 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
 
     g_io = &ImGui::GetIO();
     g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
-    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Añadir en el json docking-experimental
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Aï¿½adir en el json docking-experimental
  
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -124,6 +124,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::MenuItem("Performance")) {
             show_performance = !show_performance;
         }
+        
         if (ImGui::MenuItem("GitHub")) {
             std::system("start https://github.com/kuroi-ahiru/ahiru-engine");
         }

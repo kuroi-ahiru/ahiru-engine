@@ -7,6 +7,9 @@
 
 class ComponentTexture : public Component {
 public:
+
+    GLuint textureID;  
+    
     ComponentTexture(GameObject* owner, GLuint textureID, int width, int height, const std::string& filePath)
         : Component(Type::Texture, owner), textureID(textureID), width(width), height(height), filePath(filePath), useCheckers(false) {}
 
@@ -49,8 +52,7 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
-private:
-    GLuint textureID;          
+private:        
     GLuint checkerTextureID;   
     int width, height;         
     std::string filePath;      

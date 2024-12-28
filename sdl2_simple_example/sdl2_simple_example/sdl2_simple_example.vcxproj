@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Importer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyWindow.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -137,6 +138,7 @@
     <ClInclude Include="ComponentTexture.h" />
     <ClInclude Include="ComponentTransform.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Importer.h" />
     <ClInclude Include="MyWindow.h" />
     <ClInclude Include="Scene.h" />
   </ItemGroup>
