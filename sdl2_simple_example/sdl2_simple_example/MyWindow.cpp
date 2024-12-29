@@ -440,6 +440,7 @@ void MyWindow::setIcon(const char* iconPath) {
 
     SDL_SetWindowIcon(_window, icon);
     SDL_FreeSurface(icon);
+}
     
 void MyWindow::LoadIcons(Scene& scene) {
     playIconTexture = scene.LoadTexture("play.png");
