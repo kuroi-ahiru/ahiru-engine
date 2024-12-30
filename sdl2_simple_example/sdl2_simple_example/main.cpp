@@ -300,12 +300,12 @@ int main(int argc, char** argv) {
 
 
         // Carga automatica de la casica esa con la textura al arrancar el motor
-        if (!houseLoaded)
-        {
-            auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
-            scene.AddGameObject(bakerHouse);
-			houseLoaded = true;
-        }
+   //     if (!houseLoaded)
+   //     {
+   //         auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
+   //         scene.AddGameObject(bakerHouse);
+			//houseLoaded = true;
+   //     }
 
         // DRAG AND DROP + crear GameObject del objeto dropeado
         std::string droppedFile = window.getDroppedFile();

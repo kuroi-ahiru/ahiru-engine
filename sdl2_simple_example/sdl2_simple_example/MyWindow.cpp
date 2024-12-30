@@ -21,6 +21,7 @@
 #include <cmath>
 #include <algorithm>
 #include <streambuf>
+#include "Cube.h"
 
 using namespace std;
 
@@ -119,6 +120,36 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     static bool show_help = false;
     static bool show_performance = false;
     float menuHeight = 0.0f;
+    // Menú de clic derecho
+
+    // TODO SI DA TIEMPO: QUE SOLO SE ABRA ESTE MENU EN LA HIERARCHY
+
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        ImGui::OpenPopup("RightClickMenu");
+    }
+
+    // Crear el menú de clic derecho
+    if (ImGui::BeginPopup("RightClickMenu")) {
+        if (ImGui::BeginMenu("Add Primitive")) {
+            // Las opciones de las primitivas (Cube, Sphere, Cone) deben ir aquí
+            if (ImGui::MenuItem("Cube")) {
+                // Lógica para agregar un cubo a la escena
+                scene.AddCube("Cube", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            if (ImGui::MenuItem("Sphere")) {
+                // Lógica para agregar una esfera a la escena
+                scene.AddSphere("Sphere", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            if (ImGui::MenuItem("Cone")) {
+                // Lógica para agregar un cono a la escena
+                scene.AddCone("Cone", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            ImGui::EndMenu(); // Cierra el submenú Add Primitive
+        }
+
+        ImGui::EndPopup(); // Cierra el popup RightClickMenu
+    }
+
 
     if (ImGui::BeginMainMenuBar()) {
 

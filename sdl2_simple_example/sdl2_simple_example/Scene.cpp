@@ -9,6 +9,9 @@
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
 #include "ComponentTexture.h"
+#include "Cube.h"
+#include "Sphere.h"
+#include "Cone.h"
 
 
 //funcion aux para rayo picking mouse
@@ -264,3 +267,59 @@ std::shared_ptr<GameObject> Scene::PickGameObject(const glm::vec3& rayOrigin, co
     selectedGameObject = closestObject; //actualizamos el seleccionado
     return closestObject;
 }
+
+void Scene::AddCube(const std::string& name, const glm::vec3& position) {
+    // Crear el GameObject para el cubo
+    auto cube = std::make_shared<GameObject>(name);
+
+    GLuint textureID = 0;  // Sin textura para el cubo
+
+    auto meshComponent = std::make_shared<ComponentMesh>(cube.get(), Cube::vertices, Cube::texCoords, Cube::indices, textureID);
+    cube->AddComponent(meshComponent);
+
+    auto transformComponent = std::make_shared<ComponentTransform>(cube.get());
+    cube->AddComponent(transformComponent);
+
+   /* auto textureComponent = std::make_shared<ComponentTexture>(cube.get(), textureID, ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT));
+    cube->AddComponent(textureComponent);*/
+
+    // Añadir el GameObject a la lista de objetos de la escena
+    AddGameObject(cube);
+}
+
+void Scene::AddCone(const std::string& name, const glm::vec3& position) {
+    // Crear el GameObject para el cono
+    auto cone = std::make_shared<GameObject>(name);
+
+    GLuint textureID = 0;  // Sin textura para el cono
+
+    // Crear el componente mesh para el cono
+    auto meshComponent = std::make_shared<ComponentMesh>(cone.get(), Cone::vertices, Cone::texCoords, Cone::indices, textureID);
+    cone->AddComponent(meshComponent);
+
+    auto transformComponent = std::make_shared<ComponentTransform>(cone.get());
+    cone->AddComponent(transformComponent);
+
+    // Añadir el GameObject a la escena
+    AddGameObject(cone);
+}
+
+void Scene::AddSphere(const std::string& name, const glm::vec3& position) {
+    // Crear el GameObject para la esfera
+    auto sphere = std::make_shared<GameObject>(name);
+
+    GLuint textureID = 0;  // Sin textura para la esfera
+
+    // Crear el componente mesh para la esfera
+    auto meshComponent = std::make_shared<ComponentMesh>(sphere.get(), Sphere::vertices, Sphere::texCoords, Sphere::indices, textureID);
+    sphere->AddComponent(meshComponent);
+
+    auto transformComponent = std::make_shared<ComponentTransform>(sphere.get());
+    sphere->AddComponent(transformComponent);
+
+    // Añadir el GameObject a la escena
+    AddGameObject(sphere);
+}
+
+
+
