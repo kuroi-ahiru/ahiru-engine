@@ -21,6 +21,7 @@
 #include <cmath>
 #include <algorithm>
 #include <streambuf>
+#include "Cube.h"
 
 using namespace std;
 
@@ -32,6 +33,9 @@ float fps = 0.0f;
 static std::vector<std::string> console_log;
 static char console_input[256] = "";
 
+GLuint playIconTexture = 0;
+GLuint pauseIconTexture = 0;
+
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
 
     open(title, width, height);
@@ -42,7 +46,7 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
 
     g_io = &ImGui::GetIO();
     g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
-    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // A�adir en el json docking-experimental
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // A�adir en el json docking-experimental
  
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -116,6 +120,36 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     static bool show_help = false;
     static bool show_performance = false;
     float menuHeight = 0.0f;
+    // Menú de clic derecho
+
+    // TODO SI DA TIEMPO: QUE SOLO SE ABRA ESTE MENU EN LA HIERARCHY
+
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        ImGui::OpenPopup("RightClickMenu");
+    }
+
+    // Crear el menú de clic derecho
+    if (ImGui::BeginPopup("RightClickMenu")) {
+        if (ImGui::BeginMenu("Add Primitive")) {
+            // Las opciones de las primitivas (Cube, Sphere, Cone) deben ir aquí
+            if (ImGui::MenuItem("Cube")) {
+                // Lógica para agregar un cubo a la escena
+                scene.AddCube("Cube", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            if (ImGui::MenuItem("Sphere")) {
+                // Lógica para agregar una esfera a la escena
+                scene.AddSphere("Sphere", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            if (ImGui::MenuItem("Cone")) {
+                // Lógica para agregar un cono a la escena
+                scene.AddCone("Cone", glm::vec3(2.0f, 0.0f, 0.0f));
+            }
+            ImGui::EndMenu(); // Cierra el submenú Add Primitive
+        }
+
+        ImGui::EndPopup(); // Cierra el popup RightClickMenu
+    }
+
 
     if (ImGui::BeginMainMenuBar()) {
 
@@ -245,7 +279,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
                             }
                         }
                         break;
-                }
+                    }
                     case Component::Type::Mesh: {
                         auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
 
@@ -385,8 +419,18 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         ImGui::EndPopup();
     }
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    if (ImGui::Begin("Game Control")) {
+        if (ImGui::ImageButton((void*)(intptr_t)(isPaused ? playIconTexture : pauseIconTexture), 
+            ImVec2(32, 32))) {
+            isPaused = !isPaused;
+        }
+        ImGui::SameLine();
+        ImGui::Text(isPaused ? "Resume" : "Pause");
+    }
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
@@ -432,4 +476,9 @@ void MyWindow::setIcon(const char* iconPath) {
 
     SDL_SetWindowIcon(_window, icon);
     SDL_FreeSurface(icon);
+}
+    
+void MyWindow::LoadIcons(Scene& scene) {
+    playIconTexture = scene.LoadTexture("play.png");
+    pauseIconTexture = scene.LoadTexture("pause.png");
 }

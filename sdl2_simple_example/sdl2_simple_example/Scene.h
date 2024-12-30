@@ -16,6 +16,11 @@ public:
     void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
     void Render();
     void Update();
+    // Declaración de AddCube con posición opcional
+    void AddCube(const std::string& name, const glm::vec3& position = glm::vec3(0.0f));
+    void AddSphere(const std::string& name, const glm::vec3& position = glm::vec3(0.0f));
+    void AddCone(const std::string& name, const glm::vec3& position = glm::vec3(0.0f));
+
 
     std::shared_ptr<GameObject> CreateGameObject(const char* modelFile, const char* textureFile);
 

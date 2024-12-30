@@ -261,11 +261,11 @@ int main(int argc, char** argv) {
     while (window.processEvents() && window.isOpen()) {
 
         const auto t0 = hrclock::now();
-
-        updateCamera(); // pongo aqui lo de la camara pq me he cargado la display funcion. vale lesia
-
+        if (!window.IsPaused()) {
+            updateCamera();
+            scene.Update();
+        }
         viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);//mousepicking
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
@@ -273,7 +273,6 @@ int main(int argc, char** argv) {
             cameraUp.x, cameraUp.y, cameraUp.z);
 
         scene.DrawGrid();
-        scene.Update();
         scene.Render();
 
         std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
@@ -328,12 +327,12 @@ int main(int argc, char** argv) {
 
 
         // Carga automatica de la casica esa con la textura al arrancar el motor
-        if (!houseLoaded)
-        {
-            auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
-            scene.AddGameObject(bakerHouse);
-			houseLoaded = true;
-        }
+   //     if (!houseLoaded)
+   //     {
+   //         auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
+   //         scene.AddGameObject(bakerHouse);
+			//houseLoaded = true;
+   //     }
 
         // DRAG AND DROP + crear GameObject del objeto dropeado
         std::string droppedFile = window.getDroppedFile();
