@@ -32,16 +32,20 @@ float fps = 0.0f;
 static std::vector<std::string> console_log;
 static char console_input[256] = "";
 
+GLuint playIconTexture = 0;
+GLuint pauseIconTexture = 0;
+
 MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
 
     open(title, width, height);
+    setIcon("patonegro.bmp");
     original_cout_buffer = std::cout.rdbuf(&console_buffer);
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
 
     g_io = &ImGui::GetIO();
     g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
-    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Añadir en el json docking-experimental
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Aï¿½adir en el json docking-experimental
  
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -129,17 +133,23 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::MenuItem("About")) {
             show_about = true;
         }
+        if (ImGui::MenuItem("Open ImGui Help")) {
+            show_help = true;
+        }
+        if (ImGui::MenuItem("Close ImGui Help")) {
+            show_help = false;
+        }
+        //checkbox debug rayo mouse picking
+        static bool debugRayEnabled = false;
+        if (ImGui::Checkbox("Debug Ray Mode", &debugRayEnabled)) {
+            scene.SetDebugMode(debugRayEnabled); //activar/desactivar modo debug en Scene
+            std::cout << "Debug Ray Mode: " << (debugRayEnabled ? "Enabled" : "Disabled") << std::endl; //para comorobar si va
+        } 
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
             SDL_PushEvent(&quit_event);
-        }
-        if (ImGui::MenuItem("Open ImGui Help")) {
-            show_help = true;
-        } 
-        if (ImGui::MenuItem("Close ImGui Help")) {
-            show_help = false;
-        }
+        }        
         ImGui::EndMainMenuBar();
     }
 
@@ -203,22 +213,34 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                         auto* transform = dynamic_cast<ComponentTransform*>(component.get());
                         if (transform) {
-
-                            static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
+                            /*static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
                             static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
-                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };
+                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };*/
 
                             ImGui::Separator();
                             ImGui::Text("Transform Component");
-                            ImGui::Text("Position:");
-                            if (ImGui::InputFloat3("", position)) {
-                                // Actualizar posición si ha cambiado
-                                transform->SetPosition(glm::vec3(position[0], position[1], position[2]));
+
+                            /*ImGui::InputFloat3("Position: ", position);
+                            ImGui::InputFloat3("Rotation: ", rotation);
+                            ImGui::InputFloat3("Scale: ", scale);*/
+
+                            // Editable Position
+                            glm::vec3 position = transform->GetPosition();
+                            if (ImGui::InputFloat3("Position", &position[0])) {
+                                transform->SetPosition(position);
                             }
-                            ImGui::Text("Rotation:");
-                            ImGui::InputFloat3("", rotation);
-                            ImGui::Text("Scale:");
-                            ImGui::InputFloat3("", scale);
+
+                            // Editable Rotation
+                            glm::vec3 rotation = transform->GetRotation();
+                            if (ImGui::InputFloat3("Rotation", &rotation[0])) {
+                                transform->SetRotation(rotation);
+                            }
+
+                            // Editable Scale
+                            glm::vec3 scale = transform->GetScale();
+                            if (ImGui::InputFloat3("Scale", &scale[0])) {
+                                transform->SetScale(scale);
+                            }
                         }
                         break;
                     }
@@ -361,8 +383,18 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         ImGui::EndPopup();
     }
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    if (ImGui::Begin("Game Control")) {
+        if (ImGui::ImageButton((void*)(intptr_t)(isPaused ? playIconTexture : pauseIconTexture), 
+            ImVec2(32, 32))) {
+            isPaused = !isPaused;
+        }
+        ImGui::SameLine();
+        ImGui::Text(isPaused ? "Resume" : "Pause");
+    }
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
@@ -397,4 +429,20 @@ std::string MyWindow::getDroppedFile() {
     std::string file = droppedFile;
     droppedFile.clear();
     return file;
+}
+
+void MyWindow::setIcon(const char* iconPath) {
+    SDL_Surface* icon = SDL_LoadBMP("patonegro.bmp");
+    if (!icon) {
+        std::cerr << "Error loading icon BMP: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    SDL_SetWindowIcon(_window, icon);
+    SDL_FreeSurface(icon);
+}
+    
+void MyWindow::LoadIcons(Scene& scene) {
+    playIconTexture = scene.LoadTexture("play.png");
+    pauseIconTexture = scene.LoadTexture("pause.png");
 }

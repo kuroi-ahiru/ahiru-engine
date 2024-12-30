@@ -19,12 +19,29 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+//funcion aux para calcular rayo mouse
+glm::vec3 CalculateRay(int mouseX, int mouseY, int screenWidth, int screenHeight,
+    const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix) {
+    float x = (2.0f * mouseX) / screenWidth - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / screenHeight; // Invertir Y
+    float z = 1.0f;
+
+    glm::vec4 rayClip(x, y, -1.0f, 1.0f); // Coordenadas en espacio de recorte
+    glm::vec4 rayEye = glm::inverse(projectionMatrix) * rayClip;
+    rayEye.z = -1.0f; // En direccion del ojo
+    rayEye.w = 0.0f;
+
+    glm::vec3 rayWorld = glm::vec3(glm::inverse(viewMatrix) * rayEye);
+    return glm::normalize(rayWorld); // Normalizar el rayo
+}
+
+
 using namespace std;
 
 using hrclock = chrono::high_resolution_clock;
 using u8vec4 = glm::u8vec4;
 using ivec2 = glm::ivec2;
-static const ivec2 WINDOW_SIZE(1300, 800); //1300 800 para poder trabajr en el portatil luego se cambia
+static const ivec2 WINDOW_SIZE(1200, 600); //1300 800 para poder trabajr en el portatil luego se cambia
 static const unsigned int FPS = 60;
 static const auto FRAME_DT = 1.0s / FPS;
 
@@ -53,6 +70,9 @@ int lastMouseX, lastMouseY;
 float fov = 45.0f;
 bool houseLoaded = false;
 bool rotation = false;
+
+glm::mat4 projectionMatrix;
+glm::mat4 viewMatrix;
 
 static void init_openGL() {
 
@@ -209,6 +229,8 @@ void updateCamera() {
         lastMouseY = mouseY;
     }
 
+    projectionMatrix = glm::perspective(glm::radians(fov), (float)WINDOW_SIZE.x / (float)WINDOW_SIZE.y, 0.1f, 100.0f); //quizas mover de lugar
+
 }
 static bool processEvents() {
     SDL_Event event;
@@ -225,6 +247,7 @@ static bool processEvents() {
     return true;
 }
 
+
 int main(int argc, char** argv) {
 
     MyWindow window("Ahiru Engine", WINDOW_SIZE.x, WINDOW_SIZE.y);
@@ -233,11 +256,16 @@ int main(int argc, char** argv) {
     ilInit();
     init_openGL();
 
+    projectionMatrix = glm::perspective(glm::radians(fov), (float)WINDOW_SIZE.x / (float)WINDOW_SIZE.y, 0.1f, 100.0f); //mousepicking
+
     while (window.processEvents() && window.isOpen()) {
 
         const auto t0 = hrclock::now();
-
-        updateCamera(); // pongo aqui lo de la camara pq me he cargado la display funcion. vale lesia
+        if (!window.IsPaused()) {
+            updateCamera();
+            scene.Update();
+        }
+        viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);//mousepicking
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,
@@ -245,13 +273,31 @@ int main(int argc, char** argv) {
             cameraUp.x, cameraUp.y, cameraUp.z);
 
         scene.DrawGrid();
-        scene.Update();
         scene.Render();
 
         std::shared_ptr<GameObject> currentSelectedObject = scene.GetSelectedGameObject();
 
         window.display_func(currentSelectedObject, scene);
         window.swapBuffers();
+
+        // Picking de GameObjects
+        if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+            int mouseX, mouseY;
+            SDL_GetMouseState(&mouseX, &mouseY);
+
+            glm::vec3 rayDir = CalculateRay(mouseX, mouseY, WINDOW_SIZE.x, WINDOW_SIZE.y, projectionMatrix, viewMatrix);
+            glm::vec3 rayOrigin = cameraPos; // Usamos la pos de la camara como origen del rayo
+
+            auto selectedObject = scene.PickGameObject(rayOrigin, rayDir);
+
+            if (selectedObject) {
+                printf("GameObject seleccionado: %s\n", selectedObject->GetName().c_str());
+            }
+            else {
+                printf("No se seleccionó ningún GameObject\n");
+            }
+        }
+
 
         // Carga automatica de la casica esa con la textura al arrancar el motor
         if (!houseLoaded)

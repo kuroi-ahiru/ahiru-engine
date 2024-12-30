@@ -22,9 +22,9 @@ public:
     const glm::vec3& GetPosition() const { return position; }
     const glm::vec3& GetRotation() const { return rotation; }
     const glm::vec3& GetScale() const { return scale; }
-    const glm::mat4& GetTransformMatrix() const { return transformMatrix; }  // Para acceder a la matriz de transformación
+    const glm::mat4& GetTransformMatrix() const { return transformMatrix; }  // Para acceder a la matriz de transformaciï¿½n
 
-    // Setters con actualización de la matriz
+    // Setters con actualizaciï¿½n de la matriz
     void SetPosition(const glm::vec3& newPos) {
         position = newPos;
         UpdateTransformMatrix();
