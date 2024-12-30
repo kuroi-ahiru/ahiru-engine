@@ -50,6 +50,8 @@ MyWindow::MyWindow(const char* title, unsigned short width, unsigned short heigh
  
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
+
+    createViewportTexture();
 }
 
 MyWindow::~MyWindow() {
@@ -109,12 +111,28 @@ void MyWindow::swapBuffers() const {
     SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
 }
 
+void MyWindow::createViewportTexture() {
+    glGenTextures(1, &m_ViewportTexture);
+    glBindTexture(GL_TEXTURE_2D, m_ViewportTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void MyWindow::updateViewportTexture() {
+    glBindTexture(GL_TEXTURE_2D, m_ViewportTexture);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, _width, _height, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
 
 void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene) {
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
+
+    updateViewportTexture();
 
     static bool show_about = false;
     static bool show_help = false;
@@ -424,8 +442,30 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     }
     ImGui::End();
 
+    // VIEWPORT -------------------
+    ImGui::Begin("Viewport");
+    auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+    auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+    auto viewportOffset = ImGui::GetWindowPos();
+    m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+    m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
+    m_ViewportFocused = ImGui::IsWindowFocused();
+    m_ViewportHovered = ImGui::IsWindowHovered();
+
+    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+    m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+
+    uint32_t textureID = m_ViewportTexture;
+    ImGui::Image((void*)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, { 0, 1 }, { 1, 0 });
+
+    ImGui::End();
+    // END VIEWPORT ---------------
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    //swapBuffers();
 }
 
 
