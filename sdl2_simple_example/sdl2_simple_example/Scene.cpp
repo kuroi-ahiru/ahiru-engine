@@ -72,29 +72,27 @@ void Scene::Render() {
         }
     }
 
-    DrawGrid();
+    //Debug visual del rayo, no me va pero lo dejo por si da tiempo a arreglarlo
+    if (debugMode) {
+        // depuracion purposes
+        std::cout << "Drawing debug ray..." << std::endl;
+        std::cout << "Ray Origin: (" << debugRayOrigin.x << ", " << debugRayOrigin.y << ", " << debugRayOrigin.z << ")\n";
+        std::cout << "Ray Direction: (" << debugRayDir.x << ", " << debugRayDir.y << ", " << debugRayDir.z << ")\n";
+               
+        glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
+        glDisable(GL_LIGHTING);
+        glLineWidth(2.0f);
+        glColor3f(1.0f, 0.0f, 0.0f); //Rojo
 
-    ////Debug visual del rayo, no me va pero lo dejo por si da tiempo a arreglarlo
-    //if (debugMode) {
-    //    // depuracion purposes
-    //    std::cout << "Drawing debug ray..." << std::endl;
-    //    std::cout << "Ray Origin: (" << debugRayOrigin.x << ", " << debugRayOrigin.y << ", " << debugRayOrigin.z << ")\n";
-    //    std::cout << "Ray Direction: (" << debugRayDir.x << ", " << debugRayDir.y << ", " << debugRayDir.z << ")\n";
-    //           
-    //    glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
-    //    glDisable(GL_LIGHTING);
-    //    glLineWidth(2.0f);
-    //    glColor3f(1.0f, 0.0f, 0.0f); //Rojo
+        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 1000.0f; //Longitud del rayo (100 unidades)
 
-    //    glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 1000.0f; //Longitud del rayo (100 unidades)
+        glBegin(GL_LINES);
+        glVertex3f(debugRayOrigin.x, debugRayOrigin.y, debugRayOrigin.z);
+        glVertex3f(rayEnd.x, rayEnd.y, rayEnd.z);
+        glEnd();
 
-    //    glBegin(GL_LINES);
-    //    glVertex3f(debugRayOrigin.x, debugRayOrigin.y, debugRayOrigin.z);
-    //    glVertex3f(rayEnd.x, rayEnd.y, rayEnd.z);
-    //    glEnd();
-
-    //    glPopAttrib();
-    //}
+        glPopAttrib();
+    }
 }
 
 void Scene::Update() {

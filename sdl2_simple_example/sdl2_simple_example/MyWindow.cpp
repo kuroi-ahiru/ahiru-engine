@@ -36,25 +36,23 @@ static char console_input[256] = "";
 GLuint playIconTexture = 0;
 GLuint pauseIconTexture = 0;
 
-MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height)
-    : console_buffer(console_log), m_Render(width, height, std::make_shared<Camera>(45.0f, (float)width / height, 0.1f, 100.0f)) {
+MyWindow::MyWindow(const char* title, unsigned short width, unsigned short height) : console_buffer(console_log) {
+
     open(title, width, height);
     setIcon("patonegro.bmp");
     original_cout_buffer = std::cout.rdbuf(&console_buffer);
-
-    // Inicialización SDL e ImGui
     SDL_Init(SDL_INIT_VIDEO);
     ImGui::CreateContext();
+
     g_io = &ImGui::GetIO();
-    g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    g_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
+    g_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // A�adir en el json docking-experimental
+ 
     ImGui_ImplSDL2_InitForOpenGL(_window, _ctx);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    m_Render.initialize();
-    m_Render.createViewportTexture();
+    createViewportTexture();
 }
-
 
 MyWindow::~MyWindow() {
 
@@ -113,13 +111,28 @@ void MyWindow::swapBuffers() const {
     SDL_GL_SwapWindow(static_cast<SDL_Window*>(_window));
 }
 
+void MyWindow::createViewportTexture() {
+    glGenTextures(1, &m_ViewportTexture);
+    glBindTexture(GL_TEXTURE_2D, m_ViewportTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void MyWindow::updateViewportTexture() {
+    glBindTexture(GL_TEXTURE_2D, m_ViewportTexture);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, _width, _height, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& scene) {
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    m_Render.updateViewportTexture();
+    updateViewportTexture();
 
     static bool show_about = false;
     static bool show_help = false;
@@ -180,12 +193,12 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         if (ImGui::Checkbox("Debug Ray Mode", &debugRayEnabled)) {
             scene.SetDebugMode(debugRayEnabled); //activar/desactivar modo debug en Scene
             std::cout << "Debug Ray Mode: " << (debugRayEnabled ? "Enabled" : "Disabled") << std::endl; //para comorobar si va
-        }
+        } 
         if (ImGui::MenuItem("Quit")) {
             SDL_Event quit_event;
             quit_event.type = SDL_QUIT;
             SDL_PushEvent(&quit_event);
-        }
+        }        
         ImGui::EndMainMenuBar();
     }
 
@@ -236,7 +249,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
         ImGui::Text("Inspector");
         ImGui::Separator();
-
+           
         if (selectedObject) {
 
             ImGui::Text("Selected GameObject: %s", selectedObject->GetName().c_str());
@@ -245,62 +258,62 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
 
                 switch (component->GetType()) {
 
-                case Component::Type::Transform: {
+                    case Component::Type::Transform: {
 
-                    auto* transform = dynamic_cast<ComponentTransform*>(component.get());
-                    if (transform) {
-                        /*static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
-                        static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
-                        static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };*/
+                        auto* transform = dynamic_cast<ComponentTransform*>(component.get());
+                        if (transform) {
+                            /*static float position[3] = { transform->GetPosition().x, transform->GetPosition().y, transform->GetPosition().z };
+                            static float rotation[3] = { transform->GetRotation().x, transform->GetRotation().y, transform->GetRotation().z };
+                            static float scale[3] = { transform->GetScale().x, transform->GetScale().y, transform->GetScale().z };*/
 
-                        ImGui::Separator();
-                        ImGui::Text("Transform Component");
+                            ImGui::Separator();
+                            ImGui::Text("Transform Component");
 
-                        /*ImGui::InputFloat3("Position: ", position);
-                        ImGui::InputFloat3("Rotation: ", rotation);
-                        ImGui::InputFloat3("Scale: ", scale);*/
+                            /*ImGui::InputFloat3("Position: ", position);
+                            ImGui::InputFloat3("Rotation: ", rotation);
+                            ImGui::InputFloat3("Scale: ", scale);*/
 
-                        // Editable Position
-                        glm::vec3 position = transform->GetPosition();
-                        if (ImGui::InputFloat3("Position", &position[0])) {
-                            transform->SetPosition(position);
+                            // Editable Position
+                            glm::vec3 position = transform->GetPosition();
+                            if (ImGui::InputFloat3("Position", &position[0])) {
+                                transform->SetPosition(position);
+                            }
+
+                            // Editable Rotation
+                            glm::vec3 rotation = transform->GetRotation();
+                            if (ImGui::InputFloat3("Rotation", &rotation[0])) {
+                                transform->SetRotation(rotation);
+                            }
+
+                            // Editable Scale
+                            glm::vec3 scale = transform->GetScale();
+                            if (ImGui::InputFloat3("Scale", &scale[0])) {
+                                transform->SetScale(scale);
+                            }
                         }
-
-                        // Editable Rotation
-                        glm::vec3 rotation = transform->GetRotation();
-                        if (ImGui::InputFloat3("Rotation", &rotation[0])) {
-                            transform->SetRotation(rotation);
-                        }
-
-                        // Editable Scale
-                        glm::vec3 scale = transform->GetScale();
-                        if (ImGui::InputFloat3("Scale", &scale[0])) {
-                            transform->SetScale(scale);
-                        }
+                        break;
                     }
-                    break;
-                }
-                case Component::Type::Mesh: {
-                    auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
+                    case Component::Type::Mesh: {
+                        auto* mesh = dynamic_cast<ComponentMesh*>(component.get());
 
-                    if (mesh) {
-                        ImGui::Separator();
-                        ImGui::Text("Mesh Component");
+                        if (mesh) {
+                            ImGui::Separator();
+                            ImGui::Text("Mesh Component");
 
-                        // Tick apra mostrar u ocultar el modelo
-                        bool isVisible = mesh->IsVisible();
-                        if (ImGui::Checkbox("Set Active", &isVisible)) {
-                            mesh->SetVisible(isVisible);  // Actualiza el estado de visibilidad
+							// Tick apra mostrar u ocultar el modelo
+                            bool isVisible = mesh->IsVisible();
+                            if (ImGui::Checkbox("Set Active", &isVisible)) {
+                                mesh->SetVisible(isVisible);  // Actualiza el estado de visibilidad
+                            }
+
+                            // Tick para las normales
+                            bool showNormals = mesh->IsShowNormalsEnabled();
+                            if (ImGui::Checkbox("Show Normals", &showNormals)) {
+                                mesh->SetShowNormals(showNormals);
+                            }
                         }
-
-                        // Tick para las normales
-                        bool showNormals = mesh->IsShowNormalsEnabled();
-                        if (ImGui::Checkbox("Show Normals", &showNormals)) {
-                            mesh->SetShowNormals(showNormals);
-                        }
+                        break;
                     }
-                    break;
-                }
                 case Component::Type::Texture: {
 
                     auto* texture = dynamic_cast<ComponentTexture*>(component.get());
@@ -345,7 +358,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         }
         ImGui::End();
     }
-    if (ImGui::Begin("Console")) {
+    if  (ImGui::Begin("Console")) {
 
         ImGui::Text("Console");
         ImGui::Separator();
@@ -420,7 +433,7 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     }
 
     if (ImGui::Begin("Game Control")) {
-        if (ImGui::ImageButton((void*)(intptr_t)(isPaused ? playIconTexture : pauseIconTexture),
+        if (ImGui::ImageButton((void*)(intptr_t)(isPaused ? playIconTexture : pauseIconTexture), 
             ImVec2(32, 32))) {
             isPaused = !isPaused;
         }
@@ -429,24 +442,22 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     }
     ImGui::End();
 
-    m_Render.renderScene(scene);
-
     // VIEWPORT -------------------
     ImGui::Begin("Viewport");
     auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
     auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
     auto viewportOffset = ImGui::GetWindowPos();
-    m_Render.m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-    m_Render.m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+    m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+    m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
 
-    m_Render.m_ViewportFocused = ImGui::IsWindowFocused();
-    m_Render.m_ViewportHovered = ImGui::IsWindowHovered();
+    m_ViewportFocused = ImGui::IsWindowFocused();
+    m_ViewportHovered = ImGui::IsWindowHovered();
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-    m_Render.m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+    m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 
-    uint32_t textureID = m_Render.m_ViewportTexture;
-    ImGui::Image((void*)textureID, ImVec2{ m_Render.m_ViewportSize.x, m_Render.m_ViewportSize.y }, { 0, 1 }, { 1, 0 });
+    uint32_t textureID = m_ViewportTexture;
+    ImGui::Image((void*)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, { 0, 1 }, { 1, 0 });
 
     ImGui::End();
     // END VIEWPORT ---------------
@@ -454,55 +465,35 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    swapBuffers();
+    //swapBuffers();
 }
 
 
 bool MyWindow::processEvents(IEventProcessor* event_processor) {
+
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
-        ImGui_ImplSDL2_ProcessEvent(&e);  // Procesa eventos de ImGui
+
+        ImGui_ImplSDL2_ProcessEvent(&e);
         if (event_processor) event_processor->processEvent(e);
 
         switch (e.type) {
-        case SDL_QUIT:
-            close();
-            return false;
 
-        case SDL_MOUSEMOTION: {
-            // Si el botón derecho está presionado, procesamos el movimiento del ratón
-            if (e.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-                m_Render.getCamera()->ProcessMouseInput(e.motion.x, e.motion.y, true, 0.016f);  // Delta time apropiado
+            case SDL_QUIT:
+                close();
+                return false;
+
+            case SDL_DROPFILE: {
+
+                char* file = e.drop.file;
+                droppedFile = file; // gurda el archivo soltado en droppedFile
+                SDL_free(file);     
+                break;
             }
-            break;
-        }
-
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEBUTTONDOWN: {
-            if (e.button.button == SDL_BUTTON_RIGHT) {
-                // Si el botón derecho del ratón es presionado o liberado, lo procesamos
-                m_Render.getCamera()->ProcessMouseInput(e.motion.x, e.motion.y, e.button.state == SDL_PRESSED, 0.016f);
-            }
-            break;
-        }
-
-        case SDL_KEYDOWN:
-        case SDL_KEYUP: {
-            // Procesamos las teclas presionadas o liberadas
-            // Aquí no necesitas saber cuál es la tecla específica, solo el estado global del teclado
-            m_Render.getCamera()->processKeyboardInput(SDL_GetKeyboardState(NULL), 0.016f);  // Delta time
-            break;
-        }
-
-                      // Otros tipos de eventos, si es necesario...
         }
     }
     return true;
 }
-
-
-
-
 
 std::string MyWindow::getDroppedFile() {
 
