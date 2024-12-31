@@ -184,12 +184,17 @@ void MyWindow::display_func(std::shared_ptr<GameObject> selectedObject, Scene& s
         ImGui::EndMainMenuBar();
     }
 
+    //hay q arreglar lo del docking
     ImGuiStyle& style = ImGui::GetStyle();
     style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f); // Provisional para que se pueda ver la escena debajo de los menus de IMGUI
 
     ImGui::SetNextWindowPos(ImVec2(0, menuHeight));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - menuHeight));
-    ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
+    ImGui::Begin("DockSpace", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground |
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+        ImGuiWindowFlags_NoInputs);
 
     ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
     ImGui::End();

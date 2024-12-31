@@ -5,6 +5,7 @@
 #include <assimp/postprocess.h>
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
@@ -47,8 +48,25 @@ static bool RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDi
 }
 
 
-Scene::Scene() {
+Scene::Scene() 
+    : debugRayOrigin(0.0f, 0.0f, 0.0f), // Inicializa con el origen en (0, 0, 0) comprobar ahora en el merge q funcione bien
+      debugRayDir(0.0f, 0.0f, -1.0f),   // Dirección del rayo apuntando hacia adelante
+      frustumPlanes{} 
+{
     ilInit();
+        
+    float fov = glm::radians(45.0f);
+    float aspectRatio = 16.0f / 9.0f;
+    float nearPlane = 0.1f;
+    float farPlane = 50.0f;
+
+    projectionMatrix = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+        
+    glm::vec3 cameraPosition(0.0f, 0.0f, 5.0f); 
+    glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);   
+    glm::vec3 upVector(0.0f, 1.0f, 0.0f);       
+
+    viewMatrix = glm::lookAt(cameraPosition, cameraTarget, upVector);
 }
 
 Scene::~Scene() {
@@ -65,26 +83,46 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject) {
 }
 
 void Scene::Render() {
-
     for (auto& gameObject : gameObjects) {
-        if (gameObject) {
-            gameObject->Render();
+        if (gameObject) {            
+            bool isInsideFrustum = IsAABBInsideFrustum(
+                gameObject->GetBoundingBoxMin(),
+                gameObject->GetBoundingBoxMax()
+            );
+
+            if (isInsideFrustum || debugMode) {
+                gameObject->Render();
+            }
+
+            // Debug AABB
+            if (debugMode) {
+                gameObject->CalculateAABB(); 
+
+                //cambiar el color basado en visibilidad
+                if (isInsideFrustum) {
+                    glColor3f(0.0f, 1.0f, 0.0f); // Verde
+                }
+                else {
+                    glColor3f(1.0f, 0.0f, 0.0f); // Rojo
+                }
+
+                gameObject->DrawAABB();
+            }
         }
     }
 
-    //Debug visual del rayo, no me va pero lo dejo por si da tiempo a arreglarlo
+    // Debug visual del rayo, no me va pero lo dejo por si da tiempo a arreglarlo
     if (debugMode) {
-        // depuracion purposes
         std::cout << "Drawing debug ray..." << std::endl;
         std::cout << "Ray Origin: (" << debugRayOrigin.x << ", " << debugRayOrigin.y << ", " << debugRayOrigin.z << ")\n";
         std::cout << "Ray Direction: (" << debugRayDir.x << ", " << debugRayDir.y << ", " << debugRayDir.z << ")\n";
-               
+
         glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
         glDisable(GL_LIGHTING);
         glLineWidth(2.0f);
-        glColor3f(1.0f, 0.0f, 0.0f); //Rojo
+        glColor3f(1.0f, 0.0f, 0.0f); // Rojo
 
-        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 1000.0f; //Longitud del rayo (100 unidades)
+        glm::vec3 rayEnd = debugRayOrigin + debugRayDir * 1000.0f; // Longitud del rayo (100 unidades)
 
         glBegin(GL_LINES);
         glVertex3f(debugRayOrigin.x, debugRayOrigin.y, debugRayOrigin.z);
@@ -93,9 +131,59 @@ void Scene::Render() {
 
         glPopAttrib();
     }
+
+    if (debugMode) {
+        //limites del frustum
+        glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glLineWidth(1.0f);
+        glColor4f(0.0f, 0.0f, 1.0f, 0.3f); // Azul con opacidad
+                
+        glm::vec3 corners[8];
+        glm::mat4 invVP = glm::inverse(projectionMatrix * viewMatrix);
+
+        int i = 0;
+        for (float x : {-1.0f, 1.0f}) {
+            for (float y : {-1.0f, 1.0f}) {
+                for (float z : {0.0f, 1.0f}) { // Near (0.0) y Far (1.0)
+                    glm::vec4 clipPoint(x, y, z * 2.0f - 1.0f, 1.0f);
+                    glm::vec4 worldPoint = invVP * clipPoint;
+                    corners[i++] = glm::vec3(worldPoint) / worldPoint.w;
+                }
+            }
+        }
+                
+        glBegin(GL_LINES);
+        // Near plane
+        glVertex3fv(&corners[0].x); glVertex3fv(&corners[1].x);
+        glVertex3fv(&corners[1].x); glVertex3fv(&corners[3].x);
+        glVertex3fv(&corners[3].x); glVertex3fv(&corners[2].x);
+        glVertex3fv(&corners[2].x); glVertex3fv(&corners[0].x);
+        // Far plane
+        glVertex3fv(&corners[4].x); glVertex3fv(&corners[5].x);
+        glVertex3fv(&corners[5].x); glVertex3fv(&corners[7].x);
+        glVertex3fv(&corners[7].x); glVertex3fv(&corners[6].x);
+        glVertex3fv(&corners[6].x); glVertex3fv(&corners[4].x);
+        // Conecta near and far planes
+        for (int j = 0; j < 4; ++j) {
+            glVertex3fv(&corners[j].x); glVertex3fv(&corners[j + 4].x);
+        }
+        glEnd();
+
+        glPopAttrib();
+    }
+
 }
 
+
 void Scene::Update() {
+        
+    glm::mat4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+    //actualiza los planos del frustum -- revisar pq no actualiza bn
+    CalculateFrustumPlanes(viewMatrix, projectionMatrix);
 
     for (auto& gameObject : gameObjects) {
         if (gameObject) {
@@ -321,5 +409,40 @@ void Scene::AddSphere(const std::string& name, const glm::vec3& position) {
     AddGameObject(sphere);
 }
 
+void Scene::CalculateFrustumPlanes(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+    glm::mat4 clipMatrix = projectionMatrix * viewMatrix;
 
+    // Extract planes from the clip matrix
+    for (int i = 0; i < 6; i++) {
+        glm::vec4 plane;
+        if (i == 0) plane = clipMatrix[3] + clipMatrix[0]; // Left
+        if (i == 1) plane = clipMatrix[3] - clipMatrix[0]; // Right
+        if (i == 2) plane = clipMatrix[3] + clipMatrix[1]; // Bottom
+        if (i == 3) plane = clipMatrix[3] - clipMatrix[1]; // Top
+        if (i == 4) plane = clipMatrix[3] + clipMatrix[2]; // Near
+        if (i == 5) plane = clipMatrix[3] - clipMatrix[2]; // Far
+
+        frustumPlanes[i].normal = glm::vec3(plane.x, plane.y, plane.z);
+        frustumPlanes[i].distance = plane.w;
+
+        float length = glm::length(frustumPlanes[i].normal);
+        frustumPlanes[i].normal /= length;
+        frustumPlanes[i].distance /= length;
+    }
+}
+
+bool Scene::IsAABBInsideFrustum(const glm::vec3& min, const glm::vec3& max) {
+    for (const auto& plane : frustumPlanes) {
+        glm::vec3 pVertex = min;
+        if (plane.normal.x >= 0) pVertex.x = max.x;
+        if (plane.normal.y >= 0) pVertex.y = max.y;
+        if (plane.normal.z >= 0) pVertex.z = max.z;
+
+        if (glm::dot(plane.normal, pVertex) + plane.distance < 0) {
+            std::cout << "AABB esta fuera del frustum" << std::endl;
+            return false; //completely outside
+        }
+    }
+    return true; //at least partially inside
+}
 
