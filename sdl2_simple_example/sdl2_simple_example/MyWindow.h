@@ -9,6 +9,7 @@
 #include <SDL2/SDL_events.h>
 #include "GameObject.h"
 #include "Scene.h"
+#include "Render.h"
 
 
 class IEventProcessor {
@@ -63,8 +64,6 @@ public:
 
 	void open(const char* title, unsigned short width, unsigned short height);
 	void close();
-	void createViewportTexture();
-	void updateViewportTexture();
 	bool isOpen() const { return _window; }
 
 	bool processEvents(IEventProcessor* event_processor = nullptr);
@@ -79,13 +78,9 @@ public:
 	bool IsPaused() const { return isPaused; }
 
 private:
+	Render m_Render;
 	std::vector<std::string> console_log;
 	ConsoleBuffer console_buffer{ console_log };
 	std::streambuf* original_cout_buffer = nullptr;
 	bool isPaused = false;
-
-	bool m_ViewportFocused = false, m_ViewportHovered = false;
-	glm::vec2 m_ViewportSize = { 0.0f, 0.0f };
-	glm::vec2 m_ViewportBounds[2];
-	GLuint m_ViewportTexture = 0;
 };
