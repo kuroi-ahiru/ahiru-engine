@@ -266,6 +266,10 @@ int main(int argc, char** argv) {
             scene.Update();
         }
         viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);//mousepicking
+
+        // Actualiza los planos del frustum
+        scene.CalculateFrustumPlanes(projectionMatrix, viewMatrix);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
         gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z,

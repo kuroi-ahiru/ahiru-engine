@@ -36,13 +36,27 @@ public:
 
     void SetDebugMode(bool enabled) { debugMode = enabled; }
 
+    void CalculateFrustumPlanes(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+
 private:
     std::vector<std::shared_ptr<GameObject>> gameObjects;
     std::shared_ptr<GameObject> selectedGameObject = nullptr;
 
-    bool debugMode = false; // Bandera para habilitar/deshabilitar el debug visual mouse ray
+    bool debugMode = false; //flag para habilitar/deshabilitar el debug visual mouse ray
     glm::vec3 debugRayOrigin; // Origen del rayo
     glm::vec3 debugRayDir;    // Direccion del rayo
+
+    struct FrustumPlane {
+        glm::vec3 normal;
+        float distance;
+    };
+
+    // Frustum culling
+    FrustumPlane frustumPlanes[6];
+    bool IsAABBInsideFrustum(const glm::vec3& min, const glm::vec3& max);
+
+    glm::mat4 projectionMatrix;
+    glm::mat4 viewMatrix;
 };
 
 #endif // SCENE_H
