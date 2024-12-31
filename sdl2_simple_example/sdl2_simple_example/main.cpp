@@ -68,7 +68,7 @@ bool isRightButtonPressed = false;
 int lastMouseX, lastMouseY;
 
 float fov = 45.0f;
-bool houseLoaded = false;
+bool streetLoaded = false;
 bool rotation = false;
 
 glm::mat4 projectionMatrix;
@@ -298,14 +298,13 @@ int main(int argc, char** argv) {
             }
         }
 
-
         // Carga automatica de la casica esa con la textura al arrancar el motor
-   //     if (!houseLoaded)
-   //     {
-   //         auto bakerHouse = scene.CreateGameObject("BakerHouse.fbx", "Baker_house.png");
-   //         scene.AddGameObject(bakerHouse);
-			//houseLoaded = true;
-   //     }
+        if (!streetLoaded)
+        {
+            auto bakerHouse = scene.CreateGameObject("street.fbx", 0);
+            scene.AddGameObject(bakerHouse);
+			streetLoaded = true;
+        }
 
         // DRAG AND DROP + crear GameObject del objeto dropeado
         std::string droppedFile = window.getDroppedFile();
